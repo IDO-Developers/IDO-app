@@ -70,6 +70,18 @@
                 android:text="Sexo:"
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtIdentidad"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
 
             <TextView
                 android:id="@+id/txtCentro"
@@ -80,6 +92,18 @@
                 android:text="Centro:"
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtSexo"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
 
             <TextView
                 android:id="@+id/txtGrado"
@@ -90,6 +114,18 @@
                 android:text="Grado:"
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtCentro"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
 
             <TextView
                 android:id="@+id/txtNumeroGrupo"
@@ -100,6 +136,16 @@
                 android:text="Número de Grupo:"
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
+            <Spinner
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtGrado"
+                android:padding="30dp"
+                android:layout_toRightOf="@+id/txtNumeroGrupo"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/edit_text"
+                />
 
             <TextView
                 android:id="@+id/txtModalidad"
@@ -110,6 +156,18 @@
                 android:text="Modalidad:"
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtNumeroGrupo"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
             <TextView
                 android:id="@+id/txtModulo"
                 android:layout_width="wrap_content"
@@ -120,6 +178,18 @@
                 android:textSize="20sp"
                 android:textColor="@color/dark"
                 />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtModalidad"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
             <TextView
                 android:id="@+id/txtJornada"
                 android:layout_width="wrap_content"
@@ -129,6 +199,18 @@
                 android:text="Jornada:"
                 android:textSize="20sp"
                 android:textColor="@color/dark"
+                />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtModulo"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
                 />
 
 
