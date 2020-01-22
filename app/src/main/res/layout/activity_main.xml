@@ -1,18 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:orientation="vertical"
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    >
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <ScrollView
+        android:id="@+id/scrollRegistroMatricula"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <RelativeLayout
+            android:id="@+id/relativeRegistroMatricula"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="12dp"
+            android:elevation="@dimen/cardview_compat_inset_shadow"
+            android:background="@color/white"
+
+            >
+
+
+
+            <TextView
+                android:id="@+id/txtRegistroMatricula"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="40dp"
+                android:text="Registro Matrícula"
+                android:textColor="@color/dark"
+                android:textSize="35sp"
+                android:textStyle="bold"
+                android:textAlignment="center"/>
+
+
+
+            <TextView
+                android:id="@+id/txtIdentidad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtRegistroMatricula"
+                android:padding="30dp"
+                android:text="Identidad:"
+                android:textColor="@color/dark"
+                android:textSize="20sp"
+                />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/txtIdentidad"
+                android:layout_below="@id/txtRegistroMatricula"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:padding="20dp"
+                android:textSize="20sp"
+                android:background="@drawable/edit_text"
+                android:focusable="false"
+                />
+
+            <TextView
+                android:id="@+id/txtSexo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtIdentidad"
+                android:padding="30dp"
+                android:text="Sexo:"
+                android:textColor="@color/dark"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/txtCentro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtSexo"
+                android:padding="30dp"
+                android:text="Centro:"
+                android:textColor="@color/dark"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/txtGrado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtCentro"
+                android:padding="30dp"
+                android:text="Grado:"
+                android:textColor="@color/dark"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/txtNumeroGrupo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtGrado"
+                android:padding="30dp"
+                android:text="Número de Grupo:"
+                android:textColor="@color/dark"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/txtModalidad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtNumeroGrupo"
+                android:padding="30dp"
+                android:text="Modalidad:"
+                android:textColor="@color/dark"
+                android:textSize="20sp" />
+            <TextView
+                android:id="@+id/txtModulo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtModalidad"
+                android:padding="30dp"
+                android:text="Módulo:"
+                android:textSize="20sp"
+                android:textColor="@color/dark"
+                />
+            <TextView
+                android:id="@+id/txtJornada"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtModulo"
+                android:padding="30dp"
+                android:text="Jornada:"
+                android:textSize="20sp"
+                android:textColor="@color/dark"
+                />
+
+
+
+        </RelativeLayout>
+
+
+    </ScrollView>
+
+</RelativeLayout>
