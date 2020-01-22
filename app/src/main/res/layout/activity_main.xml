@@ -49,6 +49,7 @@
                 android:textSize="20sp"
                 />
             <EditText
+                android:id="@+id/editTextRneAlumno"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -71,6 +72,7 @@
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
             <EditText
+                android:id="@+id/editTextSexo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -93,6 +95,7 @@
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
             <EditText
+                android:id="@+id/editTextCentro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -115,6 +118,7 @@
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
             <EditText
+                android:id="@+id/editTextGrado"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -137,6 +141,7 @@
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
             <Spinner
+                android:id="@+id/espinnerGrupo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/txtGrado"
@@ -157,6 +162,7 @@
                 android:textColor="@color/dark"
                 android:textSize="20sp" />
             <EditText
+                android:id="@+id/editTextModalidad"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -179,6 +185,7 @@
                 android:textColor="@color/dark"
                 />
             <EditText
+                android:id="@+id/editTextModulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
@@ -201,6 +208,7 @@
                 android:textColor="@color/dark"
                 />
             <EditText
+                android:id="@+id/editTextJornada"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/txtIdentidad"
