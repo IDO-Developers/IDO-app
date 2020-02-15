@@ -16,22 +16,26 @@ public class Adaptador_Grupos extends ArrayAdapter<PojoGrupos> {
     Context context;
 
     public Adaptador_Grupos(Context context, ArrayList<PojoGrupos> lista) {
-        super(context, R.layout.lista_spinner, lista);
+        super(context, R.layout.item_grupos, lista);
         this.lista= lista;
     }
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        PojoGrupos pojoGrupos = getItem(position);
+        PojoGrupos pojoGrupos = (PojoGrupos) getItem(position);
         if (convertView==null)
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_grupos, null, false);
 
         TextView grupo = (TextView)convertView.findViewById(R.id.grupo);
 
-        grupo.setText(pojoGrupos.getGrupo());
+            grupo.setText(lista.get(position).getGrupo().toString());
 
         return convertView;
     }
-}
 
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+}

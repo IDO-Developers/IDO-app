@@ -1,11 +1,14 @@
 package com.matricula.ido;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -24,71 +27,74 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static android.R.layout.simple_spinner_dropdown_item;
-import static android.R.layout.simple_spinner_item;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    private String URL_Datos_Alumno=new Utilidades().URL_Datos_Alumno;
-    private String URL_Datos_Grupos=new Utilidades().URL_Dstos_Grupos;
+    private String URL_Datos_Alumno = new Utilidades().URL_Datos_Alumno;
+    private String URL_Datos_Grupos = new Utilidades().URL_Datos_Grupos;
+    private String URL_Matricular = new Utilidades().URL_Matricular;
     private String identidadAlumno;
     private EditText rneAlumno;
     private EditText sexo;
-    private EditText centro;
     private EditText grado;
     private EditText modalidad;
     private EditText jornada;
     private Spinner grupo;
     private EditText modulo;
+    private Button matricular;
     private ArrayList<PojoGrupos> arrayListsGrupos;
     private ArrayList<String> arrayListString = new ArrayList<String>();
     private Adaptador_Grupos adaptador_grupos;
-    private PojoGrupos pojoGrupos = new PojoGrupos();
+    private PojoGrupos pojoGrupos;
+    private String espacioVacioSpinner;
+    private String sexoJson;
+    private String idGrupo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rneAlumno = (EditText)findViewById(R.id.editTextRneAlumno);
-        sexo = (EditText)findViewById(R.id.editTextSexo);
-        centro = (EditText)findViewById(R.id.editTextCentro);
-        grado = (EditText)findViewById(R.id.editTextGrado);
+        rneAlumno = (EditText) findViewById(R.id.editTextRneAlumno);
+        sexo = (EditText) findViewById(R.id.editTextSexo);
+        grado = (EditText) findViewById(R.id.editTextGrado);
         grupo = (Spinner) findViewById(R.id.espinnerGrupo);
-        modalidad = (EditText)findViewById(R.id.editTextModalidad);
-        jornada = (EditText)findViewById(R.id.editTextJornada);
-        modulo = (EditText)findViewById(R.id.editTextModulo);
-
+        modalidad = (EditText) findViewById(R.id.editTextModalidad);
+        jornada = (EditText) findViewById(R.id.editTextJornada);
+        modulo = (EditText) findViewById(R.id.editTextModulo);
+        matricular = (Button) findViewById(R.id.botonMatricular);
 
 
         /**Metodo para obtener la informacion del alumno pasando como paramentro la identidad**/
         obtenerDatosAlumno(identidadAlumno);
 
-
         /**Metodo para obtener la informacion del los grupos pasando como paramentro la identidad**/
         obtenerDatosGrupos(identidadAlumno);
 
+        /**eveento que establecera los campos de modulo, modalidad y jornada cuando seleccionen un elemento del spinner**/
         grupo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(AdapterView<?> parent, View view, final int position, long id) {
+
                 try {
-                   String posicion =grupo.getItemAtPosition(grupo.getSelectedItemPosition()).toString();
-
-                   if (position!=0&&id!=0){
-                       for (int i=0;i<arrayListsGrupos.size();i++){
-                           modalidad.setText(arrayListsGrupos.get(i).getModalidad());
-                           jornada.setText(arrayListsGrupos.get(i).getJornada());
-                           modulo.setText(arrayListsGrupos.get(i).getModulo());
-                       }
-
-                   }
-
-
-
-                }catch (Exception exc) {
-                    {
-                        Toast.makeText(MainActivity.this, "" + exc, Toast.LENGTH_SHORT).show();
+                    if (position != 0) {
+                        modalidad.setText("");
+                        jornada.setText("");
+                        modulo.setText("");
+                    } else {
+                        modalidad.setText(arrayListsGrupos.get(position).getModalidad());
+                        jornada.setText(arrayListsGrupos.get(position).getJornada());
+                        modulo.setText(arrayListsGrupos.get(position).getModulo());
+                        idGrupo = String.valueOf(arrayListsGrupos.get(position).getId());
                     }
+                } catch (Exception exc) {
+                    exc.printStackTrace();
                 }
             }
 
@@ -96,99 +102,104 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
                 modalidad.setText("");
                 jornada.setText("");
+                modulo.setText("");
+            }
+        });
 
+        /**evento de boton matricular**/
+        matricular.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                matricularAlumno(rneAlumno.getText().toString());
             }
         });
     }
 
-
-
-    private void obtenerDatosAlumno(final String identidad_Alumno){
+    private void obtenerDatosAlumno(final String identidad_Alumno) {
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(
                 new JsonObjectRequest(Request.Method.GET, URL_Datos_Alumno, null,
                         new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
 
-                            JSONArray jsonArray=response.getJSONArray("infoAlumno");
+                                    JSONArray jsonArray = response.getJSONArray("infoAlumno");
 
-                            for(int i=0;i<jsonArray.length();i++){
+                                    for (int i = 0; i < jsonArray.length(); i++) {
 
-                                JSONObject jsonObject=jsonArray.getJSONObject(i);
+                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-                                rneAlumno.setText(jsonObject.getString("RNE_Alumno"));
-                                if (jsonObject.getString("Sexo").equalsIgnoreCase("F")){
-                                    sexo.setText("Femenino");
-                                }else if (jsonObject.getString("Sexo").equalsIgnoreCase("M")){
-                                    sexo.setText("Masculino");
+                                        rneAlumno.setText(jsonObject.getString("RNE_Alumno"));
+                                        if (jsonObject.getString("Sexo").equalsIgnoreCase("F")) {
+                                            sexo.setText("Femenino");
+                                            sexoJson = "F";
+                                        } else if (jsonObject.getString("Sexo").equalsIgnoreCase("M")) {
+                                            sexo.setText("Masculino");
+                                            sexoJson = "M";
+                                        }
+                                    }
+                                } catch (Exception exc) {
+
+                                    if (exc instanceof JSONException) {
+                                        Toast.makeText(MainActivity.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
+                                    }
                                 }
-                                centro.setText(jsonObject.getString("Centro_Procedencia"));
-
                             }
-                        }catch (Exception exc){
-
-                            if (exc instanceof JSONException){
-                                Toast.makeText(MainActivity.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    }
-                }, new Response.ErrorListener() {
+                        }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
 
-                        if (error instanceof AuthFailureError){
+                        if (error instanceof AuthFailureError) {
                             Toast.makeText(MainActivity.this, "Hay problemas con la autenticación", Toast.LENGTH_SHORT).show();
-                        }else if (error instanceof NetworkError){
+                        } else if (error instanceof NetworkError) {
                             Toast.makeText(MainActivity.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
-                        }else if(error instanceof TimeoutError){
+                        } else if (error instanceof TimeoutError) {
                             Toast.makeText(MainActivity.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
-                        }else if(error instanceof ServerError){
+                        } else if (error instanceof ServerError) {
                             Toast.makeText(MainActivity.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
                         }
-
                     }
                 })
         );
-
     }
 
-    private void obtenerDatosGrupos (String identidad_Alumno){
+    private void obtenerDatosGrupos(String identidad_Alumno) {
 
-        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos, null,
+        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos,
+                null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
 
-                        try{
-                            JSONArray jsonArray=response.getJSONArray("filaGrupos");
+                        try {
+                            JSONArray jsonArray = response.getJSONArray("filaGrupos");
+                            arrayListsGrupos = new ArrayList<>();
 
-                            for(int i=0;i<jsonArray.length();i++){
-                                JSONObject jsonObject=jsonArray.getJSONObject(i);
-                                arrayListsGrupos=new ArrayList<>();
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-                                pojoGrupos.setGrupo(jsonObject.getString("Grupo"));
+                                pojoGrupos = new PojoGrupos();
+
                                 pojoGrupos.setId(jsonObject.getInt("Id_Grupo"));
                                 pojoGrupos.setJornada(jsonObject.getString("Jornada"));
                                 pojoGrupos.setModalidad(jsonObject.getString("Nombre_Modalidad"));
-                                grado.setText(jsonObject.getString("Grado"));
                                 pojoGrupos.setModulo(jsonObject.getString("Nombre_Modulo"));
+                                pojoGrupos.setGrupo(jsonObject.getString("Grupo"));
+                                grado.setText(jsonObject.getString("Grado"));
 
+                                /**ArrayList con solo el grupo para mostrar en el spinner**/
+                                arrayListString.add(pojoGrupos.getGrupo());
+
+                                /**Arraylist con todos los elementos de la clase pojo**/
                                 arrayListsGrupos.add(pojoGrupos);
-                              //  adaptador_grupos = new Adaptador_Grupos(MainActivity.this,arrayListsGrupos);
-                              //  grupo.setAdapter(adaptador_grupos);
-
-                                for (int a = 0; a< arrayListsGrupos.size(); a++){
-                                    arrayListString.add(pojoGrupos.getGrupo().toString());
-                                }
-                                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this,simple_spinner_dropdown_item,
-                                        arrayListString);
-                                arrayAdapter.setDropDownViewResource(simple_spinner_dropdown_item);
-                                grupo.setAdapter(arrayAdapter);
                             }
+                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, simple_spinner_dropdown_item,
+                                    arrayListString);
+                            adapter.setDropDownViewResource(simple_spinner_dropdown_item);
+                            grupo.setAdapter(adapter);
 
-                        }catch (Exception exc){
-                            if (exc instanceof JSONException){
+                        } catch (Exception exc) {
+                            if (exc instanceof JSONException) {
                                 Toast.makeText(MainActivity.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
                             }
 
@@ -198,18 +209,59 @@ public class MainActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                if (error instanceof AuthFailureError){
+                if (error instanceof AuthFailureError) {
                     Toast.makeText(MainActivity.this, "Hay problemas con la autenticación", Toast.LENGTH_SHORT).show();
-                }else if (error instanceof NetworkError){
+                } else if (error instanceof NetworkError) {
                     Toast.makeText(MainActivity.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
-                }else if(error instanceof TimeoutError){
+                } else if (error instanceof TimeoutError) {
                     Toast.makeText(MainActivity.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
-                }else if(error instanceof ServerError){
+                } else if (error instanceof ServerError) {
                     Toast.makeText(MainActivity.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
                 }
             }
         }));
     }
 
+    private void matricularAlumno(final String identidad_Alumno) {
+        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.POST, URL_Matricular,
+                        new Cursor_a_Json_Object().deStringAJson(sexoJson, identidad_Alumno, idGrupo),
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
+                                   if (response!=null){
+                                       Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
+
+                                   }
+
+                                } catch (Exception exc) {
+                                    exc.printStackTrace();
+                                }
+                            }
+                        }, new Response.ErrorListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                        if (error instanceof AuthFailureError) {
+                            String mensaje;
+                            mensaje = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                            try {
+                                JSONObject jsonObject = new JSONObject(mensaje);
+                                Toast.makeText(MainActivity.this, ""+jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        } else if (error instanceof NetworkError) {
+                            Toast.makeText(MainActivity.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
+                        } else if (error instanceof TimeoutError) {
+                            Toast.makeText(MainActivity.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
+                        } else if (error instanceof ServerError) {
+                            Toast.makeText(MainActivity.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+        );
+    }
 
 }

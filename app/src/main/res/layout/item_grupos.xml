@@ -8,10 +8,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Grupo"
-        android:textSize="20sp"
-        android:padding="5dp"
+        android:textSize="15sp"
+        android:padding="8dp"
         android:textColor="@color/dark"
-        android:textStyle="bold"
         android:layout_marginLeft="20dp"
         />
 </RelativeLayout>
