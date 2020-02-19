@@ -1,8 +1,12 @@
 package com.matricula.ido;
 
+import android.app.ActivityOptions;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -36,20 +40,41 @@ public class Login extends AppCompatActivity {
 
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
+
         rellay1 = (RelativeLayout) findViewById(R.id.rellay1);
         rellay2 = (RelativeLayout) findViewById(R.id.rellay2);
         rellay3 = findViewById(R.id.rellay3);
         tituloapp = findViewById(R.id.tituloApp);
         btn_restaurar_contrasenia = findViewById(R.id.button_restaurar_contrasenia);
-        handler.postDelayed(runnable, 800); //2000 is el tiempo de espera
+        handler.postDelayed(runnable, 800); //800 es el tiempo de espera
         btn_login = findViewById(R.id.button_login);
         correo = findViewById(R.id.correo_login_ET);
         correo_restaurar = findViewById(R.id.correo_restaurar);
         contrasenia = findViewById(R.id.contrasenia_ET);
         loading = findViewById(R.id.loading);
         restaurar = findViewById(R.id.boton_restaurar);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle();
+        }
+
+
+        btn_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    // Apply activity transition
+                    Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                    startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                } else {
+                    // Swap without transition
+                    Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                    startActivity(mainActivity);
+                }
+
+            }
+        });
     }
 }

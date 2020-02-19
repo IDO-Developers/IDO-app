@@ -3,7 +3,8 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    >
 
     <ScrollView
         android:id="@+id/scrollRegistroMatricula"
@@ -12,7 +13,8 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            >
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardView"
@@ -156,7 +158,8 @@
                         android:focusable="false"
                         android:editable="false"
                         android:padding="10dp"
-                        android:textSize="15sp" />
+                        android:textSize="15sp"
+                        />
 
                     <TextView
                         android:id="@+id/txtModulo"
@@ -205,6 +208,7 @@
                         android:editable="false"
                         android:padding="10dp"
                         android:textSize="15sp" />
+
                     <Button
                         android:id="@+id/botonMatricular"
                         android:layout_width="wrap_content"
@@ -217,9 +221,10 @@
                         android:textSize="20sp"
                         android:textStyle="normal|bold"
                         android:layout_below="@+id/editTextJornada"
-                        android:layout_marginTop="100dp"
+                        android:layout_marginTop="80dp"
                         android:layout_marginBottom="20dp"
-                        android:layout_centerHorizontal="true"/>
+                        android:layout_centerHorizontal="true"
+                        />
 
 
                 </RelativeLayout>

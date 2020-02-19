@@ -3,6 +3,8 @@ package com.matricula.ido;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -10,7 +12,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -58,6 +63,15 @@ public class MainActivity extends AppCompatActivity {
     private String obtnValorSpinner;
     private JSONArray jsonArraySpinner;
     private int posicion;
+    private View contentViewTxtModalidad;
+    private View contentViewTxtModulo;
+    private View contentViewTxtJornada;
+    private View contentViewEditModalidad;
+    private View contentViewEditModulo;
+    private View contentViewEditJornada;
+
+    private int shortAnimationDuration;
+    private View loadingView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +87,22 @@ public class MainActivity extends AppCompatActivity {
         modulo = (EditText) findViewById(R.id.editTextModulo);
         matricular = (Button) findViewById(R.id.botonMatricular);
 
+        contentViewTxtModalidad = (TextView)findViewById(R.id.txtModalidad);
+        contentViewTxtModulo = (TextView)findViewById(R.id.txtModulo);
+        contentViewTxtJornada = (TextView)findViewById(R.id.txtJornada);
+        contentViewEditModalidad = (EditText)findViewById(R.id.editTextModalidad);
+        contentViewEditModulo = (EditText)findViewById(R.id.editTextModulo);
+        contentViewEditJornada = (EditText)findViewById(R.id.editTextJornada);
+
+        contentViewTxtModalidad.setVisibility(View.GONE);
+        contentViewTxtModulo.setVisibility(View.GONE);
+        contentViewTxtJornada.setVisibility(View.GONE);
+        contentViewEditModalidad.setVisibility(View.GONE);
+        contentViewEditModulo.setVisibility(View.GONE);
+        contentViewEditJornada.setVisibility(View.GONE);
+
+        shortAnimationDuration = getResources().getInteger(
+               android.R.integer.config_mediumAnimTime);
 
         /**Metodo para obtener la informacion del alumno pasando como paramentro la identidad**/
         obtenerDatosAlumno(identidadAlumno);
@@ -93,11 +123,12 @@ public class MainActivity extends AppCompatActivity {
                         jornada.setText("");
                         modulo.setText("");
                     } else {
+
                         modalidad.setText(arrayListsGrupos.get(position).getModalidad());
                         jornada.setText(arrayListsGrupos.get(position).getJornada());
                         modulo.setText(arrayListsGrupos.get(position).getModulo());
                         idGrupo = String.valueOf(arrayListsGrupos.get(position).getId());
-
+                        crossfade();
 
                     }
                 } catch (Exception exc) {
@@ -283,6 +314,69 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
         );
+    }
+
+    private void crossfade() {
+
+        // Set the content view to 0% opacity but visible, so that it is visible
+        // (but fully transparent) during the animation.
+        contentViewTxtModalidad.setAlpha(0f);
+        contentViewTxtModalidad.setVisibility(View.VISIBLE);
+
+        contentViewTxtModulo.setAlpha(0f);
+        contentViewTxtModulo.setVisibility(View.VISIBLE);
+
+        contentViewTxtJornada.setAlpha(0f);
+        contentViewTxtJornada.setVisibility(View.VISIBLE);
+
+        contentViewEditModalidad.setAlpha(0f);
+        contentViewEditModalidad.setVisibility(View.VISIBLE);
+
+        contentViewEditModulo.setAlpha(0f);
+        contentViewEditModulo.setVisibility(View.VISIBLE);
+
+        contentViewEditJornada.setAlpha(0f);
+        contentViewEditJornada.setVisibility(View.VISIBLE);
+
+        // Animate the content view to 100% opacity, and clear any animation
+        // listener set on the view.
+        contentViewTxtModalidad.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+        contentViewTxtModulo.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+        contentViewTxtJornada.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+        contentViewEditModalidad.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+        contentViewEditModulo.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+        contentViewEditJornada.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+
+        // Animate the loading view to 0% opacity. After the animation ends,
+        // set its visibility to GONE as an optimization step (it won't
+        // participate in layout passes, etc.)
+        loadingView.animate()
+                .alpha(0f)
+                .setDuration(shortAnimationDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        loadingView.setVisibility(View.GONE);
+                    }
+                });
     }
 
 }
