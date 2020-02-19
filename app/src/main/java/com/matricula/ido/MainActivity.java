@@ -55,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     private String espacioVacioSpinner;
     private String sexoJson;
     private String idGrupo;
+    private String obtnValorSpinner;
+    private JSONArray jsonArraySpinner;
+    private int posicion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +84,11 @@ public class MainActivity extends AppCompatActivity {
         grupo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, final int position, long id) {
+               obtnValorSpinner = grupo.getItemAtPosition(grupo.getSelectedItemPosition()).toString();
 
+               posicion=position;
                 try {
-                    if (position != 0) {
+                    if (obtnValorSpinner.equals("")) {
                         modalidad.setText("");
                         jornada.setText("");
                         modulo.setText("");
@@ -92,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
                         jornada.setText(arrayListsGrupos.get(position).getJornada());
                         modulo.setText(arrayListsGrupos.get(position).getModulo());
                         idGrupo = String.valueOf(arrayListsGrupos.get(position).getId());
+
+
                     }
                 } catch (Exception exc) {
                     exc.printStackTrace();
@@ -110,7 +117,11 @@ public class MainActivity extends AppCompatActivity {
         matricular.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                matricularAlumno(rneAlumno.getText().toString());
+                if (obtnValorSpinner.equals("")){
+                    Toast.makeText(MainActivity.this, "¡Por Favor! Seleccione un grupo para poder matricular", Toast.LENGTH_LONG).show();
+                }else {
+                    matricularAlumno(rneAlumno.getText().toString());
+                }
             }
         });
     }
@@ -174,8 +185,18 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             JSONArray jsonArray = response.getJSONArray("filaGrupos");
                             arrayListsGrupos = new ArrayList<>();
+                            arrayListString.add("");
+                            arrayListsGrupos.add(pojoGrupos);
 
                             for (int i = 0; i < jsonArray.length(); i++) {
+                                if (jsonArray.length()==1){
+                                    arrayListsGrupos.clear();
+                                    arrayListString.clear();
+                                    grupo.setSelection(0);
+                                }
+
+                                jsonArraySpinner =jsonArray;
+
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
 
                                 pojoGrupos = new PojoGrupos();
@@ -223,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void matricularAlumno(final String identidad_Alumno) {
+
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.POST, URL_Matricular,
                         new Cursor_a_Json_Object().deStringAJson(sexoJson, identidad_Alumno, idGrupo),
                         new Response.Listener<JSONObject>() {
@@ -231,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
                                 try {
                                    if (response!=null){
                                        Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
-
                                    }
 
                                 } catch (Exception exc) {

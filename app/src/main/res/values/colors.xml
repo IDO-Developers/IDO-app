@@ -2,9 +2,12 @@
 <resources>
     <color name="colorPrimary">#363636</color>
     <color name="colorPrimaryDark">#414141</color>
+    <color name="colorPrimaryLogin">#4B4B4B</color>
+    <color name="colorPrimaryDarkLogin">#646464</color>
     <color name="colorAccent">#D81B60</color>
     <color name="dark">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="grey">#EEEEEE</color>
     <color name="blue">#0091EA</color>
+    <color name="transparent">#00000000</color>
 </resources>
