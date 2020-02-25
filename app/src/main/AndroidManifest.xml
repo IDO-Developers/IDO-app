@@ -24,6 +24,7 @@
         </activity>
         <activity android:name=".PDF.ViewPdf"
             android:configChanges="orientation|screenSize"
+            android:hardwareAccelerated="false"
             android:label="Registro Matricula"
             >
 

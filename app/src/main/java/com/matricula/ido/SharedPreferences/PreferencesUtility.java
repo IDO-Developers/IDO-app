@@ -5,4 +5,5 @@ public class PreferencesUtility {
     public static final String LOGGED_IN_PREF = "logged_in_status";
     public static final String TOKEN_AUTH = "token_auth";
     public static final String IDENTIDAD = "identidad";
+    public static final String PDF = "pdf";
 }

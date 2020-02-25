@@ -9,6 +9,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -16,6 +17,10 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -34,15 +39,23 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.matricula.ido.PDF.TemplatePDF;
 import com.itextpdf.text.Image;
+import com.matricula.ido.PDF.crearPDF;
+import com.matricula.ido.SharedPreferences.SaveSharedPreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import static android.R.layout.simple_spinner_dropdown_item;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -52,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private String URL_Datos_Alumno = new Utilidades().URL_Datos_Alumno;
     private String URL_Datos_Grupos = new Utilidades().URL_Datos_Grupos;
     private String URL_Matricular = new Utilidades().URL_Matricular;
+    private String URL_LOGOUT = new Utilidades().URL_LOGOUT;
     public String identidadAlumno;
     private TextView nombreAlumno;
     private EditText rneAlumno;
@@ -83,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private int shortAnimationDuration;
     private View loadingView;
     private SharedPreferences sharedPreferences;
-
+    private String token;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
         identidadAlumno=sharedPreferences.getString(IDENTIDAD,"");
+        token=sharedPreferences.getString(TOKEN_AUTH,"");
 
         rneAlumno = (EditText) findViewById(R.id.editTextRneAlumno);
         sexo = (EditText) findViewById(R.id.editTextSexo);
@@ -245,8 +260,6 @@ public class MainActivity extends AppCompatActivity {
                                     grupo.setSelection(0);
                                 }
 
-                                jsonArraySpinner =jsonArray;
-
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
 
                                 pojoGrupos = new PojoGrupos();
@@ -304,9 +317,18 @@ public class MainActivity extends AppCompatActivity {
                                 try {
                                    if (response!=null){
                                        Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
-                                       crearPDF();
-                                   }
+                                       crearPDF(identidad_Alumno);
 
+                                       File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                       File pdfFile = new File(folder,"Verificar Matricula: "+identidad_Alumno+".pdf");
+
+                                       SharedPreferences.Editor editor = sharedPreferences.edit();
+                                       editor.putString(PDF,""+pdfFile);
+                                       Toast.makeText(MainActivity.this, ""+pdfFile, Toast.LENGTH_SHORT).show();
+                                       editor.apply();
+                                       editor.commit();
+
+                                   }
                                 } catch (Exception exc) {
                                     exc.printStackTrace();
                                 }
@@ -336,6 +358,58 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
         );
+    }
+
+    /**Metodo para cerrar Sesion**/
+    private void cerrarSesion(){
+        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET,URL_LOGOUT, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try{
+                            JSONArray jsonArray = response.getJSONArray("sesion");
+                            for (int i=0;i<jsonArray.length();i++){
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                Toast.makeText(MainActivity.this, ""+jsonObject.getString("mensaje"), Toast.LENGTH_SHORT).show();
+                            }
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.clear();
+                            editor.apply();
+                            SaveSharedPreference.setLoggedIn(MainActivity.this,false);
+                            Intent intent = new Intent(MainActivity.this,Login.class);
+                            startActivity(intent);
+                            finish();
+                        }catch (Exception exc){
+                            exc.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                if (error instanceof AuthFailureError) {
+                    Toast.makeText(MainActivity.this, "Problema en la autenticacion", Toast.LENGTH_SHORT).show();
+                } else if (error instanceof NetworkError) {
+                    Toast.makeText(MainActivity.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
+                } else if (error instanceof TimeoutError) {
+                    Toast.makeText(MainActivity.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
+                } else if (error instanceof ServerError) {
+                    Toast.makeText(MainActivity.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String,String> headers = new HashMap<>();
+                headers.put("Authorization",token);
+
+                return headers;
+            }
+        });
+    }
+
+    public void cerrarSesionDesdeViewPDF(){
+        cerrarSesion();
     }
 
     private void crossfade() {
@@ -402,11 +476,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**Metodo para crear PDF**/
-    public void crearPDFPublic(){
-        crearPDF();
-    }
-    private void crearPDF(){
+
+    private void crearPDF(String identidad_Alumno){
 
         try{
             if (ActivityCompat.checkSelfPermission(getApplicationContext(),
@@ -421,50 +492,17 @@ public class MainActivity extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         101);
             } else {
-                pdf();
+                new crearPDF().crear(rneAlumno.getText().toString(),
+                        nombreAlumno.getText().toString(),
+                        grado.getText().toString(),
+                        grupo.getSelectedItem().toString(),
+                        modalidad.getText().toString(),
+                        modulo.getText().toString(),
+                        jornada.getText().toString(),MainActivity.this);
             }
         }catch (Exception exc){
             exc.printStackTrace();
         }
-    }
-    private void pdf(){
-        /**Metodo para obtener datos del Alumno**/
-
-        templatePDF = new TemplatePDF(MainActivity.this);
-        templatePDF.openDocument(identidadAlumno);
-        try {
-
-            Drawable d = getResources().getDrawable(R.drawable.icono);
-            BitmapDrawable bitDw = ((BitmapDrawable) d);
-            Bitmap bmp = bitDw.getBitmap();
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            Image image = Image.getInstance(stream.toByteArray());
-
-            templatePDF.createPdf(image);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        templatePDF.addTitles("", "Comprobante de Matricula", null, null);
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        //templatePDF.addNota(" Nota:");
-        //templatePDF.addnotaParrafo(nota);
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addEspacio("");
-        templatePDF.addParagraph("");
-        templatePDF.addParagraph("");
-        templatePDF.closeDocument();
-        templatePDF.viewPDF();
     }
 
     @Override
@@ -472,10 +510,38 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode){
             case 100:
                 if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                   pdf();
+                    new crearPDF().crear(rneAlumno.getText().toString(),
+                            nombreAlumno.getText().toString(),
+                            grado.getText().toString(),
+                            grupo.getSelectedItem().toString(),
+                            modalidad.getText().toString(),
+                            modulo.getText().toString(),
+                            jornada.getText().toString(),MainActivity.this);
                 }
                 break;
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.cerrarsesion, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+        switch (item.getItemId()){
+
+            case R.id.cerrarSesion:
+                cerrarSesion();
+                break;
+
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
