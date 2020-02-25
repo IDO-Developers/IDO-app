@@ -2,4 +2,6 @@
 
     <string name="app_name">Matricula IDO</string>
     <string name="grayscaleContaine">grayscaleContaine</string>
+    <string name="titulo_Actividad_Matricula">Registro Matricula</string>
+
 </resources>

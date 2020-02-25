@@ -1,10 +1,19 @@
 package com.matricula.ido;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -12,12 +21,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.Request;
@@ -26,25 +32,28 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.matricula.ido.PDF.TemplatePDF;
+import com.itextpdf.text.Image;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import static android.R.layout.simple_spinner_dropdown_item;
-
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    private TemplatePDF templatePDF;
+
     private String URL_Datos_Alumno = new Utilidades().URL_Datos_Alumno;
     private String URL_Datos_Grupos = new Utilidades().URL_Datos_Grupos;
     private String URL_Matricular = new Utilidades().URL_Matricular;
-    private String identidadAlumno;
+    public String identidadAlumno;
+    private TextView nombreAlumno;
     private EditText rneAlumno;
     private EditText sexo;
     private EditText grado;
@@ -63,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private String obtnValorSpinner;
     private JSONArray jsonArraySpinner;
     private int posicion;
+    private int reponseLength;
     private View contentViewTxtModalidad;
     private View contentViewTxtModulo;
     private View contentViewTxtJornada;
@@ -72,11 +82,16 @@ public class MainActivity extends AppCompatActivity {
 
     private int shortAnimationDuration;
     private View loadingView;
+    private SharedPreferences sharedPreferences;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        identidadAlumno=sharedPreferences.getString(IDENTIDAD,"");
 
         rneAlumno = (EditText) findViewById(R.id.editTextRneAlumno);
         sexo = (EditText) findViewById(R.id.editTextSexo);
@@ -86,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
         jornada = (EditText) findViewById(R.id.editTextJornada);
         modulo = (EditText) findViewById(R.id.editTextModulo);
         matricular = (Button) findViewById(R.id.botonMatricular);
+        nombreAlumno = (TextView) findViewById(R.id.txtNombreAlumno);
+
 
         contentViewTxtModalidad = (TextView)findViewById(R.id.txtModalidad);
         contentViewTxtModulo = (TextView)findViewById(R.id.txtModulo);
@@ -109,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
         /**Metodo para obtener la informacion del los grupos pasando como paramentro la identidad**/
         obtenerDatosGrupos(identidadAlumno);
+
 
         /**eveento que establecera los campos de modulo, modalidad y jornada cuando seleccionen un elemento del spinner**/
         grupo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -159,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void obtenerDatosAlumno(final String identidad_Alumno) {
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(
-                new JsonObjectRequest(Request.Method.GET, URL_Datos_Alumno, null,
+                new JsonObjectRequest(Request.Method.GET, URL_Datos_Alumno+identidad_Alumno, null,
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
@@ -179,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
                                             sexo.setText("Masculino");
                                             sexoJson = "M";
                                         }
+                                        nombreAlumno.setText(jsonObject.getString("Nombres")+" "+jsonObject.getString("Apellidos"));
                                     }
                                 } catch (Exception exc) {
 
@@ -207,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void obtenerDatosGrupos(String identidad_Alumno) {
 
-        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos,
+        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos+identidad_Alumno,
                 null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -274,16 +293,18 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
+    /**Metodoo que realiza la peticion de matricula al servidor**/
     private void matricularAlumno(final String identidad_Alumno) {
 
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.POST, URL_Matricular,
-                        new Cursor_a_Json_Object().deStringAJson(sexoJson, identidad_Alumno, idGrupo),
+                        new String_a_Json_Object().deStringAJsonInfoAlumno(sexoJson, identidad_Alumno, idGrupo),
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
                                 try {
                                    if (response!=null){
                                        Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
+                                       crearPDF();
                                    }
 
                                 } catch (Exception exc) {
@@ -301,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 JSONObject jsonObject = new JSONObject(mensaje);
                                 Toast.makeText(MainActivity.this, ""+jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -377,6 +399,88 @@ public class MainActivity extends AppCompatActivity {
                         loadingView.setVisibility(View.GONE);
                     }
                 });
+    }
+
+
+    /**Metodo para crear PDF**/
+    public void crearPDFPublic(){
+        crearPDF();
+    }
+    private void crearPDF(){
+
+        try{
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED&&ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        100);
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        101);
+            } else {
+                pdf();
+            }
+        }catch (Exception exc){
+            exc.printStackTrace();
+        }
+    }
+    private void pdf(){
+        /**Metodo para obtener datos del Alumno**/
+
+        templatePDF = new TemplatePDF(MainActivity.this);
+        templatePDF.openDocument(identidadAlumno);
+        try {
+
+            Drawable d = getResources().getDrawable(R.drawable.icono);
+            BitmapDrawable bitDw = ((BitmapDrawable) d);
+            Bitmap bmp = bitDw.getBitmap();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            Image image = Image.getInstance(stream.toByteArray());
+
+            templatePDF.createPdf(image);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        templatePDF.addTitles("", "Comprobante de Matricula", null, null);
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        //templatePDF.addNota(" Nota:");
+        //templatePDF.addnotaParrafo(nota);
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addEspacio("");
+        templatePDF.addParagraph("");
+        templatePDF.addParagraph("");
+        templatePDF.closeDocument();
+        templatePDF.viewPDF();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 100:
+                if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                   pdf();
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 
 }

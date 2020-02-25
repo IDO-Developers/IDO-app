@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/colorPrimaryDarkFondoCard"
     >
 
     <ScrollView
@@ -16,6 +17,8 @@
             android:layout_height="match_parent"
             >
 
+
+
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardView"
                 android:layout_width="match_parent"
@@ -23,32 +26,35 @@
                 card_view:cardCornerRadius="4dp"
                 card_view:cardElevation="8dp"
                 card_view:cardPreventCornerOverlap="true"
-                card_view:cardUseCompatPadding="true">
+                card_view:cardUseCompatPadding="true"
+                >
 
                 <RelativeLayout
                     android:id="@+id/relativeRegistroMatricula"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_margin="12dp"
-                    android:background="@color/white">
+                    android:background="@color/white"
+                    >
 
                     <TextView
-                        android:id="@+id/txtRegistroMatricula"
+                        android:id="@+id/txtNombreAlumno"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:paddingTop="10dp"
                         android:paddingBottom="8dp"
-                        android:text="Registro Matrícula"
-                        android:textAlignment="center"
+                        android:text="Nombre Alumno"
                         android:textColor="@color/dark"
-                        android:textSize="35sp"
-                        android:textStyle="bold" />
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textAlignment="center"
+                        />
 
                     <TextView
                         android:id="@+id/txtIdentidad"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/txtRegistroMatricula"
+                        android:layout_below="@+id/txtNombreAlumno"
                         android:paddingTop="20dp"
                         android:paddingRight="20dp"
                         android:text="Identidad:"
@@ -59,7 +65,7 @@
                         android:id="@+id/editTextRneAlumno"
                         android:layout_width="match_parent"
                         android:layout_height="40dp"
-                        android:layout_below="@id/txtRegistroMatricula"
+                        android:layout_below="@id/txtNombreAlumno"
                         android:layout_marginTop="10dp"
                         android:layout_marginRight="10dp"
                         android:layout_toRightOf="@+id/txtIdentidad"
@@ -214,15 +220,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:background="@drawable/boton"
+                        android:background="@drawable/background_buttons2"
                         android:padding="15dp"
                         android:text="Matricula"
                         android:textColor="@color/white"
                         android:textSize="20sp"
                         android:textStyle="normal|bold"
                         android:layout_below="@+id/editTextJornada"
-                        android:layout_marginTop="80dp"
-                        android:layout_marginBottom="20dp"
+                        android:layout_marginTop="60dp"
+                        android:layout_marginBottom="60dp"
                         android:layout_centerHorizontal="true"
                         />
 
