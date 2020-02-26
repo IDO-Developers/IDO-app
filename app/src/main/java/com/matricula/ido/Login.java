@@ -6,22 +6,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,28 +32,33 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.itextpdf.text.Image;
 import com.matricula.ido.PDF.TemplatePDF;
 import com.matricula.ido.PDF.ViewPdf;
 import com.matricula.ido.SharedPreferences.SaveSharedPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+
 import com.matricula.ido.PDF.crearPDF;
-import static android.R.layout.simple_spinner_dropdown_item;
+
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRADO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRUPO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODALIDAD;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODULO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.JORNADA;
 
 
 public class Login extends AppCompatActivity {
 
     private TemplatePDF templatePDF;
-    private String URL_Login = new Utilidades().URL_Login;
+    private String URL_Login = new Utilidades().URL_LOGIN;
     private String URL_Datos_Alumno = new Utilidades().URL_Datos_Alumno;
     private String URL_Datos_Grupos = new Utilidades().URL_Datos_Grupos;
     private File pdfFile;
@@ -80,39 +83,44 @@ public class Login extends AppCompatActivity {
     private String ident;
     private Boolean registered;
     private String identidadPref;
-    private String pathPdfPref;
-    private String pathPdf;
-    private String nombre;
-    private String grado;
-    private String grupo;
-    private String modulo;
-    private String modalidad;
-    private String jornada;
-    private String identidadPdf;
-    private int contadorGrupos;
+     String pathPdfPref;
+     String pathPdf;
+     private String nombre;
+     private String grado;
+     private String grupo;
+     private String modalidad;
+     private String modulo;
+     private String jornada;
+     int contadorGrupos;
+
 
     @Override
-    protected void onCreate(@Nullable final Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setContentView(R.layout.login);
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        nombre = sharedPreferences.getString(NOMBRE,"");
+        grado = sharedPreferences.getString(GRADO,"");
+        grupo = sharedPreferences.getString(GRUPO,"");
+        modalidad = sharedPreferences.getString(MODALIDAD,"");
+        modulo = sharedPreferences.getString(MODULO,"");
+        jornada = sharedPreferences.getString(JORNADA,"");
+        Log.i("LOGIN",""+sharedPreferences.getString(IDENTIDAD,""));
 
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 identidadPref = sharedPreferences.getString(IDENTIDAD,"");
+                Log.i("LOGIN PREF", ""+identidadPref);
 
-                obtenerDatosAlumno(identidadPref);
-                obtenerDatosGrupos(identidadPref);
-
-               /**Valida si el pdf existe pàra abrirlo*/
+                /**Valida si el pdf existe pàra abrirlo*/
                 File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
                 pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
 
                 if (pdfFile.exists()==true){
                     viewPDF(pdfFile);
                 }else {
-                    pdf();
+                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
                 }
             }else{
                 String identidad=sharedPreferences.getString(IDENTIDAD,"");
@@ -124,13 +132,12 @@ public class Login extends AppCompatActivity {
                 if (pdfFile.exists()==true){
                     viewPDF(pdfFile);
                 }else {
-                    pdf();
+                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
                 }
             }
         }else{
             handler.postDelayed(runnable, 1000); //800 es el tiempo de espera
         }
-        setContentView(R.layout.login);
 
         rellay1 = (RelativeLayout) findViewById(R.id.rellay1);
         rellay2 = (RelativeLayout) findViewById(R.id.rellay2);
@@ -154,20 +161,11 @@ public class Login extends AppCompatActivity {
                 pass=contraseña.getText().toString();
                 ident=identidad.getText().toString();
 
-                obtenerDatosAlumno(ident);
-                obtenerDatosGrupos(ident);
-
-
                 if ((identidad.getText().toString().trim().length() > 0) && (contraseña.getText().toString().trim().length() > 0)) {
                     /**Valida si el pdf existe pàra abrirlo**/
-                    File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                    pdfFile = new File(folder,"Verificar Matricula: "+identidad.getText().toString()+".pdf");
 
-                    if (pdfFile.exists()==true){
-                        viewPDF(pdfFile);
-                    }else{
                         login(ident, pass);
-                    }
+
                 } else {
                     if (identidad.getText().toString().length() == 0 ||
                             identidad.getText().toString().trim().equalsIgnoreCase("")) {
@@ -184,11 +182,16 @@ public class Login extends AppCompatActivity {
 
     /**Metodo para loggearse**/
     private void login(final String identidad, final String contraseña){
+        loading.setVisibility(View.VISIBLE);
+        btn_login.setVisibility(View.GONE);
+
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.POST, URL_Login,
                 new String_a_Json_Object().deStringAJsonLogin(identidad,contraseña),
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        loading.setVisibility(View.GONE);
+
                         try {
 
                             if (response!=null){
@@ -207,33 +210,54 @@ public class Login extends AppCompatActivity {
                                     editor.apply();
                                     editor.commit();
 
-                                    if (contadorGrupos==1){
-                                        pdf();
+
+                                    File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                    pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
+                                    if (pdfFile.exists()==true){
+                                        viewPDF(pdfFile);
                                     }else{
-                                        /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                        Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                        mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                        finish();
-                                        startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                                        if (contadorGrupos==1){
+                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                                        }else{
+                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                            mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                            finish();
+                                            startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                                        }
                                     }
+
+
+
                                 }else{
-                                    if (contadorGrupos==1){
-                                        pdf();
-                                    }else {
-                                        /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                        Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                        startActivity(mainActivity);
+                                    File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                    pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
+                                    if (pdfFile.exists()==true){
+                                        viewPDF(pdfFile);
+                                    }else{
+                                        if (contadorGrupos==1){
+                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                                        }else{
+                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                            startActivity(mainActivity);
+                                        }
                                     }
                                 }
                             }
                         }catch (Exception exc){
                             Toast.makeText(Login.this, ""+exc, Toast.LENGTH_SHORT).show();
+                            btn_login.setVisibility(View.VISIBLE);
+                            loading.setVisibility(View.GONE);
                         }
                     }
                 }, new Response.ErrorListener() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void onErrorResponse(VolleyError error) {
+                btn_login.setBackground(getResources().getDrawable(R.drawable.background_buttons2));
+                loading.setVisibility(View.GONE);
+                btn_login.setVisibility(View.VISIBLE);
 
                 if (error instanceof AuthFailureError) {
                     String mensaje;
@@ -255,95 +279,13 @@ public class Login extends AppCompatActivity {
         }));
     }
 
-    private void obtenerDatosAlumno(final String identidad_Alumno) {
-        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(
-                new JsonObjectRequest(Request.Method.GET, URL_Datos_Alumno+identidad_Alumno, null,
-                        new Response.Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                try {
 
-                                    JSONArray jsonArray = response.getJSONArray("infoAlumno");
-
-                                    for (int i = 0; i < jsonArray.length(); i++) {
-
-                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-                                        identidadPdf = jsonObject.getString("RNE_Alumno");
-                                        nombre = jsonObject.getString("Nombres")+" "+jsonObject.getString("Apellidos");
-                                    }
-                                } catch (Exception exc) {
-
-                                    if (exc instanceof JSONException) {
-                                        Toast.makeText(Login.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            }
-                        }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                        if (error instanceof AuthFailureError) {
-                            Toast.makeText(Login.this, "Hay problemas con la autenticación", Toast.LENGTH_SHORT).show();
-                        } else if (error instanceof NetworkError) {
-                            Toast.makeText(Login.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
-                        } else if (error instanceof TimeoutError) {
-                            Toast.makeText(Login.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
-                        } else if (error instanceof ServerError) {
-                            Toast.makeText(Login.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                })
-        );
-    }
-    private void obtenerDatosGrupos(String identidad_Alumno) {
-
-        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos+identidad_Alumno,
-                null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-
-                        try {
-                            JSONArray jsonArray = response.getJSONArray("filaGrupos");
-
-                            for (int i = 0; i < jsonArray.length(); i++) {
-                                JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-                                contadorGrupos=jsonArray.length();
-                                jornada = jsonObject.getString("Jornada");
-                                modalidad = jsonObject.getString("Nombre_Modalidad");
-                                modulo = jsonObject.getString("Nombre_Modulo");
-                                grupo = jsonObject.getString("Grupo");
-                                grado = jsonObject.getString("Grado");
-                            }
-                        } catch (Exception exc) {
-                            if (exc instanceof JSONException) {
-                                Toast.makeText(Login.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                if (error instanceof AuthFailureError) {
-                    Toast.makeText(Login.this, "Hay problemas con la autenticación", Toast.LENGTH_SHORT).show();
-                } else if (error instanceof NetworkError) {
-                    Toast.makeText(Login.this, "Problemas con la red", Toast.LENGTH_SHORT).show();
-                } else if (error instanceof TimeoutError) {
-                    Toast.makeText(Login.this, "Revise su conexión a internet", Toast.LENGTH_SHORT).show();
-                } else if (error instanceof ServerError) {
-                    Toast.makeText(Login.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }));
-    }
-
-    private void pdf(){
+    private void pdf(String identidad_Alumno, String nombre, String grado, String grupo, String modalidad,
+                     String modulo, String jornada){
         try{
             if (ActivityCompat.checkSelfPermission(getApplicationContext(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED&&ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(),
                     Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED) {
 
                 ActivityCompat.requestPermissions(this,
@@ -353,12 +295,16 @@ public class Login extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         101);
             } else {
-                new crearPDF().crear(identidadPdf,nombre,grado,grupo,modalidad,modulo,jornada,Login.this);
+
+                new crearPDF().crear(identidad_Alumno,nombre,grado,grupo,modalidad,modulo,jornada,Login.this);
+                finish();
             }
         }catch (Exception exc){
             exc.printStackTrace();
         }
     }
+
+
 
     public  void viewPDF(File pdfFile){
         Intent intent = new Intent(Login.this, ViewPdf.class);
@@ -370,4 +316,14 @@ public class Login extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 100:
+                if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    new crearPDF().crear(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,Login.this);
+                }
+                break;
+        }
+    }
 }

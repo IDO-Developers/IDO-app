@@ -55,6 +55,12 @@ import java.util.Map;
 
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRADO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRUPO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODALIDAD;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODULO;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.JORNADA;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
 
 
@@ -184,6 +190,15 @@ public class MainActivity extends AppCompatActivity {
                 if (obtnValorSpinner.equals("")){
                     Toast.makeText(MainActivity.this, "¡Por Favor! Seleccione un grupo para poder matricular", Toast.LENGTH_LONG).show();
                 }else {
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(NOMBRE, nombreAlumno.getText().toString());
+                    editor.putString(GRADO, grado.getText().toString());
+                    editor.putString(GRUPO, grupo.getSelectedItem().toString());
+                    editor.putString(MODALIDAD, modalidad.getText().toString());
+                    editor.putString(MODULO, modulo.getText().toString());
+                    editor.putString(JORNADA, jornada.getText().toString());
+                    editor.apply();
+                    editor.commit();
                     matricularAlumno(rneAlumno.getText().toString());
                 }
             }
@@ -318,16 +333,6 @@ public class MainActivity extends AppCompatActivity {
                                    if (response!=null){
                                        Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
                                        crearPDF(identidad_Alumno);
-
-                                       File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                                       File pdfFile = new File(folder,"Verificar Matricula: "+identidad_Alumno+".pdf");
-
-                                       SharedPreferences.Editor editor = sharedPreferences.edit();
-                                       editor.putString(PDF,""+pdfFile);
-                                       Toast.makeText(MainActivity.this, ""+pdfFile, Toast.LENGTH_SHORT).show();
-                                       editor.apply();
-                                       editor.commit();
-
                                    }
                                 } catch (Exception exc) {
                                     exc.printStackTrace();
@@ -377,6 +382,7 @@ public class MainActivity extends AppCompatActivity {
                             editor.apply();
                             SaveSharedPreference.setLoggedIn(MainActivity.this,false);
                             Intent intent = new Intent(MainActivity.this,Login.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
                             finish();
                         }catch (Exception exc){
@@ -406,10 +412,6 @@ public class MainActivity extends AppCompatActivity {
                 return headers;
             }
         });
-    }
-
-    public void cerrarSesionDesdeViewPDF(){
-        cerrarSesion();
     }
 
     private void crossfade() {

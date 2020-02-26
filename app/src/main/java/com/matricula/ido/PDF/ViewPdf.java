@@ -140,6 +140,7 @@ public class ViewPdf extends AppCompatActivity {
                             editor.apply();
                             SaveSharedPreference.setLoggedIn(ViewPdf.this,false);
                             Intent intent = new Intent(ViewPdf.this, Login.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
                             finish();
                         }catch (Exception exc){
