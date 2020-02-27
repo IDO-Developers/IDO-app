@@ -12,5 +12,6 @@ public class PreferencesUtility {
     public static final String MODALIDAD = "modalidad";
     public static final String MODULO = "modulo";
     public static final String JORNADA = "jornada";
+    public static final String HORA_FECHA = "horaFecha";
 
 }

@@ -2,6 +2,7 @@ package com.matricula.ido;
 
 import android.Manifest;
 import android.app.ActivityOptions;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -48,6 +49,7 @@ import java.util.ArrayList;
 import com.matricula.ido.PDF.crearPDF;
 
 import static android.R.layout.simple_spinner_dropdown_item;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.HORA_FECHA;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
@@ -94,7 +96,9 @@ public class Login extends AppCompatActivity {
      private String modalidad;
      private String modulo;
      private String jornada;
+     private String fecha;
      private boolean contadorGrupos=false;
+     private ProgressDialog progress;
 
 
     @Override
@@ -109,6 +113,7 @@ public class Login extends AppCompatActivity {
         modalidad = sharedPreferences.getString(MODALIDAD,"");
         modulo = sharedPreferences.getString(MODULO,"");
         jornada = sharedPreferences.getString(JORNADA,"");
+        fecha = sharedPreferences.getString(HORA_FECHA,"");
 
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
 
@@ -120,9 +125,11 @@ public class Login extends AppCompatActivity {
                 pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
 
                 if (pdfFile.exists()==true){
+                    progress = ProgressDialog.show(Login.this, "Cargando",
+                            "Por favor esperce", true);
                     viewPDF(pdfFile);
                 }else {
-                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
                 }
             }else{
                 String identidad=sharedPreferences.getString(IDENTIDAD,"");
@@ -132,9 +139,11 @@ public class Login extends AppCompatActivity {
                 pdfFile = new File(folder,"Verificar Matricula: "+identidad+"");
 
                 if (pdfFile.exists()==true){
+                    progress = ProgressDialog.show(Login.this, "Cargando",
+                            "Por favor esperce", true);
                     viewPDF(pdfFile);
                 }else {
-                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
                 }
             }
         }else{
@@ -236,8 +245,9 @@ public class Login extends AppCompatActivity {
                                             modalidad = sharedPreferences.getString(MODALIDAD,"");
                                             modulo = sharedPreferences.getString(MODULO,"");
                                             jornada = sharedPreferences.getString(JORNADA,"");
+                                            fecha = sharedPreferences.getString(HORA_FECHA, "");
 
-                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
                                         }else{
                                             /**Lanza a la actividad principal cuando el logueo es correcto**/
                                             Intent mainActivity = new Intent(Login.this, MainActivity.class);
@@ -265,8 +275,9 @@ public class Login extends AppCompatActivity {
                                             modalidad = sharedPreferences.getString(MODALIDAD,"");
                                             modulo = sharedPreferences.getString(MODULO,"");
                                             jornada = sharedPreferences.getString(JORNADA,"");
+                                            fecha = sharedPreferences.getString(HORA_FECHA, "");
 
-                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
+                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
                                         }else{
                                             /**Lanza a la actividad principal cuando el logueo es correcto**/
                                             Intent mainActivity = new Intent(Login.this, MainActivity.class);
@@ -336,6 +347,7 @@ public class Login extends AppCompatActivity {
                         try {
                             JSONArray jsonArray = response.getJSONArray("filaGrupos");
 
+
                             for (int i = 0; i < jsonArray.length(); i++) {
 
                                 if (jsonArray.length()==1){
@@ -351,17 +363,19 @@ public class Login extends AppCompatActivity {
                                 editor.putString(JORNADA,jsonObject.getString("Jornada"));
                                 editor.apply();
                                 editor.commit();
-
                             }
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString(HORA_FECHA,response.getString("created_at").substring(0,16));
+                            editor.apply();
+                            editor.commit();
+
 
 
                         } catch (Exception exc) {
                             if (exc instanceof JSONException) {
                                 Toast.makeText(Login.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
                             }
-
                         }
-
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -382,7 +396,7 @@ public class Login extends AppCompatActivity {
 
 
     private void pdf(String identidad_Alumno, String nombre, String grado, String grupo, String modalidad,
-                     String modulo, String jornada){
+                     String modulo, String jornada, String fecha){
         try{
             if (ActivityCompat.checkSelfPermission(getApplicationContext(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -396,8 +410,7 @@ public class Login extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         101);
             } else {
-
-                new crearPDF().crear(identidad_Alumno,nombre,grado,grupo,modalidad,modulo,jornada,Login.this);
+                new crearPDF().crear(identidad_Alumno,nombre,grado,grupo,modalidad,modulo,jornada,fecha,Login.this);
                 finish();
             }
         }catch (Exception exc){
@@ -414,7 +427,9 @@ public class Login extends AppCompatActivity {
         intent.addFlags(intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         finish();
+        progress.dismiss();
         startActivity(intent);
+
     }
 
     @Override
@@ -422,7 +437,7 @@ public class Login extends AppCompatActivity {
         switch (requestCode){
             case 100:
                 if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                    new crearPDF().crear(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,Login.this);
+                    new crearPDF().crear(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha,Login.this);
                 }
                 break;
         }

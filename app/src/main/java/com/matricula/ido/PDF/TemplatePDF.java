@@ -35,19 +35,16 @@ public class TemplatePDF {
     int i;
     private Paragraph paragraph;
     private SharedPreferences sharedPreferences;
-    private Font fTitulo = new Font(Font.FontFamily.TIMES_ROMAN,16,Font.BOLD);
-    private Font fSubTitulo = new Font(Font.FontFamily.TIMES_ROMAN,16,Font.NORMAL);
-     private Font fTitle = new Font(Font.FontFamily.TIMES_ROMAN,14,Font.UNDERLINE|Font.BOLD);
-    private Font fSubTitle = new Font(Font.FontFamily.TIMES_ROMAN,8,Font.NORMAL);
+    private Font fTitulo = new Font(Font.FontFamily.TIMES_ROMAN,24,Font.BOLD);
+    private Font fSubTitulo = new Font(Font.FontFamily.TIMES_ROMAN,20,Font.BOLDITALIC);
+    private Font fecha = new Font(Font.FontFamily.TIMES_ROMAN,16,Font.NORMAL|Font.BOLD);
+
+    private Font fTitle = new Font(Font.FontFamily.TIMES_ROMAN,14,Font.UNDERLINE|Font.BOLD);
+    private Font fSubTitle = new Font(Font.FontFamily.TIMES_ROMAN,13,Font.NORMAL);
     private Font fText = new Font(Font.FontFamily.TIMES_ROMAN,9,Font.BOLD);
     private Font fTextNota = new Font(Font.FontFamily.TIMES_ROMAN,11,Font.BOLD);
-    private Font fEspecificar = new Font(Font.FontFamily.TIMES_ROMAN,11,Font.NORMAL);
-    private Font fSubrayada = new Font(Font.FontFamily.TIMES_ROMAN,11,Font.UNDERLINE|Font.BOLD);
-    private Font fSubTitleTabla = new Font(Font.FontFamily.TIMES_ROMAN,6,Font.BOLD);
-    private Font fTextTabla = new Font(Font.FontFamily.TIMES_ROMAN,1,Font.BOLD);
-    private Font fHighText = new Font(Font.FontFamily.TIMES_ROMAN,9,Font.BOLD );
-    private Font fpequenia = new Font(Font.FontFamily.TIMES_ROMAN,9,Font.BOLD );
-
+    private Font text = new Font(Font.FontFamily.TIMES_ROMAN,16,Font.NORMAL);
+    private Font textT = new Font(Font.FontFamily.TIMES_ROMAN,18,Font.BOLD);
     private Font fbixText = new Font(Font.FontFamily.TIMES_ROMAN,11,Font.BOLD );
 
     public TemplatePDF(Context context) {
@@ -86,7 +83,7 @@ public class TemplatePDF {
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
 
-        float[] medidaCeldas = {14.50f, 14.5f, 36.5f,30.55f, };
+        float[] medidaCeldas = {20.50f, 14.5f, 36.5f,30.55f};
         table.setWidths(medidaCeldas);
         table.setHorizontalAlignment(Element.ALIGN_LEFT);
 
@@ -111,7 +108,7 @@ public class TemplatePDF {
         paragraph = new Paragraph();
         addChildP(new Paragraph(title,fTitulo));
         addChildP(new Paragraph(subTitle,fSubTitulo));
-        addChildP(new Paragraph(date,fSubTitulo));
+        addChildP(new Paragraph(date,fecha));
         addChildP(new Paragraph(control,fTitle));
 
         try {
@@ -122,7 +119,16 @@ public class TemplatePDF {
 
     public void addTexto(String texto){
      paragraph = new Paragraph();
-     addChildP(new Paragraph(texto));
+     addChildP(new Paragraph(texto,text));
+
+        try {
+            document.add(paragraph);
+        } catch (Exception e) {
+        }
+    }
+    public void addTextoT(String texto){
+        paragraph = new Paragraph();
+        addChildP(new Paragraph(texto,textT));
 
         try {
             document.add(paragraph);

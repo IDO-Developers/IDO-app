@@ -49,7 +49,11 @@ import static android.R.layout.simple_spinner_dropdown_item;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +65,7 @@ import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRUPO;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODALIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODULO;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.JORNADA;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.HORA_FECHA;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
 
 
@@ -197,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString(MODALIDAD, modalidad.getText().toString());
                     editor.putString(MODULO, modulo.getText().toString());
                     editor.putString(JORNADA, jornada.getText().toString());
+                    editor.putString(HORA_FECHA, obtenerFecha()+" "+obtenerHora());
                     editor.apply();
                     editor.commit();
                     matricularAlumno(rneAlumno.getText().toString());
@@ -501,7 +507,7 @@ public class MainActivity extends AppCompatActivity {
                         grupo.getSelectedItem().toString(),
                         modalidad.getText().toString(),
                         modulo.getText().toString(),
-                        jornada.getText().toString(),MainActivity.this);
+                        jornada.getText().toString(),obtenerFecha(),MainActivity.this);
             }
         }catch (Exception exc){
             exc.printStackTrace();
@@ -519,10 +525,27 @@ public class MainActivity extends AppCompatActivity {
                             grupo.getSelectedItem().toString(),
                             modalidad.getText().toString(),
                             modulo.getText().toString(),
-                            jornada.getText().toString(),MainActivity.this);
+                            jornada.getText().toString(),obtenerFecha(),MainActivity.this);
                 }
                 break;
         }
+    }
+
+    private String obtenerHora() {
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("HH:MM");
+        String hora = dateFormat.format(date);
+        return  hora;
+    }
+
+    private String obtenerFecha(){
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat fechaForm = new SimpleDateFormat("yyyy-MM-dd");
+        String fecha = fechaForm.format(calendar.getTime());
+
+
+        return fecha;
     }
 
     @Override
