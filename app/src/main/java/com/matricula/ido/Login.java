@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -28,6 +29,7 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.Request;
 import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
 import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
@@ -45,6 +47,7 @@ import java.util.ArrayList;
 
 import com.matricula.ido.PDF.crearPDF;
 
+import static android.R.layout.simple_spinner_dropdown_item;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
@@ -91,7 +94,7 @@ public class Login extends AppCompatActivity {
      private String modalidad;
      private String modulo;
      private String jornada;
-     int contadorGrupos;
+     private boolean contadorGrupos=false;
 
 
     @Override
@@ -99,18 +102,17 @@ public class Login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        identidadPref = sharedPreferences.getString(IDENTIDAD,"");
         nombre = sharedPreferences.getString(NOMBRE,"");
         grado = sharedPreferences.getString(GRADO,"");
         grupo = sharedPreferences.getString(GRUPO,"");
         modalidad = sharedPreferences.getString(MODALIDAD,"");
         modulo = sharedPreferences.getString(MODULO,"");
         jornada = sharedPreferences.getString(JORNADA,"");
-        Log.i("LOGIN",""+sharedPreferences.getString(IDENTIDAD,""));
 
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                identidadPref = sharedPreferences.getString(IDENTIDAD,"");
                 Log.i("LOGIN PREF", ""+identidadPref);
 
                 /**Valida si el pdf existe pàra abrirlo*/
@@ -160,6 +162,7 @@ public class Login extends AppCompatActivity {
 
                 pass=contraseña.getText().toString();
                 ident=identidad.getText().toString();
+                obtenerDatosGrupos(ident);
 
                 if ((identidad.getText().toString().trim().length() > 0) && (contraseña.getText().toString().trim().length() > 0)) {
                     /**Valida si el pdf existe pàra abrirlo**/
@@ -197,6 +200,15 @@ public class Login extends AppCompatActivity {
                             if (response!=null){
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
+                                    JSONArray jsonArray = response.getJSONArray("datoAlumno");
+                                    for (int i=0;i<jsonArray.length();i++){
+                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                                        editor.putString(NOMBRE,jsonObject.getString("Nombres")+" "+jsonObject.getString("Apellidos"));
+                                        editor.apply();
+                                        editor.commit();
+
+                                    }
                                     Toast.makeText(Login.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
                                     String token = response.getString("access_token");
                                     String token_type = response.getString("token_type");
@@ -210,13 +222,21 @@ public class Login extends AppCompatActivity {
                                     editor.apply();
                                     editor.commit();
 
-
                                     File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
                                     pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
                                     if (pdfFile.exists()==true){
                                         viewPDF(pdfFile);
                                     }else{
-                                        if (contadorGrupos==1){
+                                        if (contadorGrupos==true){
+                                            sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+                                            identidadPref = sharedPreferences.getString(IDENTIDAD,"");
+                                            nombre = sharedPreferences.getString(NOMBRE,"");
+                                            grado = sharedPreferences.getString(GRADO,"");
+                                            grupo = sharedPreferences.getString(GRUPO,"");
+                                            modalidad = sharedPreferences.getString(MODALIDAD,"");
+                                            modulo = sharedPreferences.getString(MODULO,"");
+                                            jornada = sharedPreferences.getString(JORNADA,"");
+
                                             pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
                                         }else{
                                             /**Lanza a la actividad principal cuando el logueo es correcto**/
@@ -235,7 +255,17 @@ public class Login extends AppCompatActivity {
                                     if (pdfFile.exists()==true){
                                         viewPDF(pdfFile);
                                     }else{
-                                        if (contadorGrupos==1){
+                                        Log.i("LOGIN A",""+contadorGrupos);
+                                        if (contadorGrupos==true){
+                                            sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+                                            identidadPref = sharedPreferences.getString(IDENTIDAD,"");
+                                            nombre = sharedPreferences.getString(NOMBRE,"");
+                                            grado = sharedPreferences.getString(GRADO,"");
+                                            grupo = sharedPreferences.getString(GRUPO,"");
+                                            modalidad = sharedPreferences.getString(MODALIDAD,"");
+                                            modulo = sharedPreferences.getString(MODULO,"");
+                                            jornada = sharedPreferences.getString(JORNADA,"");
+
                                             pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada);
                                         }else{
                                             /**Lanza a la actividad principal cuando el logueo es correcto**/
@@ -276,7 +306,78 @@ public class Login extends AppCompatActivity {
                     Toast.makeText(Login.this, "Tenemos problemas, intentelo de nuevo mas tarde", Toast.LENGTH_SHORT).show();
                 }
             }
+        }).setRetryPolicy(new RetryPolicy() {
+            @Override
+            public int getCurrentTimeout() {
+                return 0;
+            }
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 0;
+            }
+
+            @Override
+            public void retry(VolleyError error) throws VolleyError {
+
+            }
         }));
+    }
+
+
+    private void obtenerDatosGrupos(String identidad_Alumno) {
+
+        VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos+identidad_Alumno,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+                        try {
+                            JSONArray jsonArray = response.getJSONArray("filaGrupos");
+
+                            for (int i = 0; i < jsonArray.length(); i++) {
+
+                                if (jsonArray.length()==1){
+                                    contadorGrupos=true;
+                                }
+                                Log.i("LOGIN C",""+contadorGrupos);
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString(GRADO,jsonObject.getString("Grado"));
+                                editor.putString(GRUPO,jsonObject.getString("Grupo"));
+                                editor.putString(MODALIDAD,jsonObject.getString("Nombre_Modalidad"));
+                                editor.putString(MODULO,jsonObject.getString("Nombre_Modulo"));
+                                editor.putString(JORNADA,jsonObject.getString("Jornada"));
+                                editor.apply();
+                                editor.commit();
+
+                            }
+
+
+                        } catch (Exception exc) {
+                            if (exc instanceof JSONException) {
+                                Toast.makeText(Login.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
+                            }
+
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                if (error instanceof AuthFailureError) {
+                    error.printStackTrace();
+                } else if (error instanceof NetworkError) {
+                    error.printStackTrace();
+                } else if (error instanceof TimeoutError) {
+                    error.printStackTrace();
+                } else if (error instanceof ServerError) {
+                    error.printStackTrace();
+                }
+            }
+        }));
+
     }
 
 
