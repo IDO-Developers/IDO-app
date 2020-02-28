@@ -1,6 +1,8 @@
 package com.matricula.ido;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.ActivityOptions;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -16,6 +18,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -99,12 +102,28 @@ public class Login extends AppCompatActivity {
      private String fecha;
      private boolean contadorGrupos=false;
      private ProgressDialog progress;
+    private View contentViewLogo;
+    private int shortAnimationDuration;
+    private View loadingView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
+
+        rellay1 = (RelativeLayout) findViewById(R.id.rellay1);
+        rellay2 = (RelativeLayout) findViewById(R.id.rellay2);
+        rellay3 = findViewById(R.id.rellay3);
+        tituloapp = findViewById(R.id.tituloApp);
+        btn_restaurar_contrasenia = findViewById(R.id.button_restaurar_contrasenia);
+        btn_login = findViewById(R.id.button_login);
+        identidad = findViewById(R.id.correo_login_ET);
+        correo_restaurar = findViewById(R.id.correo_restaurar);
+        contraseña = findViewById(R.id.contrasenia_ET);
+        loading = findViewById(R.id.loading);
+        restaurar = findViewById(R.id.boton_restaurar);
+
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
         identidadPref = sharedPreferences.getString(IDENTIDAD,"");
         nombre = sharedPreferences.getString(NOMBRE,"");
@@ -147,20 +166,10 @@ public class Login extends AppCompatActivity {
                 }
             }
         }else{
-            handler.postDelayed(runnable, 1000); //800 es el tiempo de espera
+           handler.postDelayed(runnable, 1200); //800 es el tiempo de espera
         }
 
-        rellay1 = (RelativeLayout) findViewById(R.id.rellay1);
-        rellay2 = (RelativeLayout) findViewById(R.id.rellay2);
-        rellay3 = findViewById(R.id.rellay3);
-        tituloapp = findViewById(R.id.tituloApp);
-        btn_restaurar_contrasenia = findViewById(R.id.button_restaurar_contrasenia);
-        btn_login = findViewById(R.id.button_login);
-        identidad = findViewById(R.id.correo_login_ET);
-        correo_restaurar = findViewById(R.id.correo_restaurar);
-        contraseña = findViewById(R.id.contrasenia_ET);
-        loading = findViewById(R.id.loading);
-        restaurar = findViewById(R.id.boton_restaurar);
+
 
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -442,4 +451,32 @@ public class Login extends AppCompatActivity {
                 break;
         }
     }
+
+    private void crossfade() {
+        // Set the content view to 0% opacity but visible, so that it is visible
+        // (but fully transparent) during the animation.
+        contentViewLogo.setAlpha(0f);
+        contentViewLogo.setVisibility(View.VISIBLE);
+
+        // Animate the content view to 100% opacity, and clear any animation
+        // listener set on the view.
+        contentViewLogo.animate()
+                .alpha(1f)
+                .setDuration(shortAnimationDuration)
+                .setListener(null);
+
+        // Animate the loading view to 0% opacity. After the animation ends,
+        // set its visibility to GONE as an optimization step (it won't
+        // participate in layout passes, etc.)
+        loadingView.animate()
+                .alpha(0f)
+                .setDuration(shortAnimationDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        loadingView.setVisibility(View.GONE);
+                    }
+                });
+    }
+
 }

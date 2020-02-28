@@ -153,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
         /**Metodo para obtener la informacion del los grupos pasando como paramentro la identidad**/
         obtenerDatosGrupos(identidadAlumno);
 
-
         /**eveento que establecera los campos de modulo, modalidad y jornada cuando seleccionen un elemento del spinner**/
         grupo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -484,8 +483,6 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-
-
     private void crearPDF(String identidad_Alumno){
 
         try{
@@ -564,7 +561,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.cerrarSesion:
                 cerrarSesion();
                 break;
-
         }
 
         return super.onOptionsItemSelected(item);
@@ -574,5 +570,4 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         finish();
     }
-
 }
