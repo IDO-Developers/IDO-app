@@ -105,12 +105,8 @@ public class ViewPdf extends AppCompatActivity {
 
 
             case R.id.enviarAdjunto:
-                String[] mailto = {emailAdmin};
                 Uri uri = Uri.fromFile(new File(String.valueOf(file)));
                 Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                emailIntent.putExtra(Intent.EXTRA_EMAIL, mailto);
-                emailIntent.putExtra(Intent.EXTRA_SUBJECT, "");
-                emailIntent.putExtra(Intent.EXTRA_TEXT,"Hola PDF se adjunta en este correo. ");
                 emailIntent.setType("application/pdf");
                 emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
                 startActivity(Intent.createChooser(emailIntent, "Send email using:"));

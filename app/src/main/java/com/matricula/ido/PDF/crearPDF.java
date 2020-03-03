@@ -1,21 +1,13 @@
 package com.matricula.ido.PDF;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import com.itextpdf.text.Image;
 import com.matricula.ido.Login;
 import com.matricula.ido.R;
 import java.io.ByteArrayOutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 public class crearPDF {
 
@@ -26,7 +18,6 @@ public class crearPDF {
 
         try{
                 /**Metodo para obtener datos del Alumno**/
-
                 templatePDF = new TemplatePDF(context);
                 templatePDF.openDocument(identidad_Alumno);
 

@@ -1,31 +1,28 @@
 package com.matricula.ido;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.ActivityOptions;
-import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -38,22 +35,23 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.matricula.ido.Base_de_Datos.BaseDeDatosInfoAlumno;
 import com.matricula.ido.PDF.TemplatePDF;
 import com.matricula.ido.PDF.ViewPdf;
 import com.matricula.ido.SharedPreferences.SaveSharedPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.matricula.ido.PDF.crearPDF;
 
-import static android.R.layout.simple_spinner_dropdown_item;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.HORA_FECHA;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
+import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRADO;
@@ -79,6 +77,7 @@ public class Login extends AppCompatActivity {
     private ProgressBar loading;
     private Handler handler = new Handler();
     private SharedPreferences sharedPreferences;
+    private SharedPreferences sharedContador;
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -91,16 +90,29 @@ public class Login extends AppCompatActivity {
     private String ident;
     private Boolean registered;
     private String identidadPref;
-     String pathPdfPref;
-     String pathPdf;
-     private String nombre;
-     private String grado;
-     private String grupo;
-     private String modalidad;
-     private String modulo;
-     private String jornada;
-     private String fecha;
-     private boolean contadorGrupos=false;
+    String pathPdfPref;
+    String pathPdf;
+    private String nombre;
+    private String grado;
+    private String grupo;
+    private String modalidad;
+    private String modulo;
+    private String jornada;
+    private String fecha;
+    private BaseDeDatosInfoAlumno db = new BaseDeDatosInfoAlumno(this);
+    private String PROJECTION[] = new String[]{BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,
+            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS};
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +132,7 @@ public class Login extends AppCompatActivity {
         restaurar = findViewById(R.id.boton_restaurar);
 
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        sharedContador = getSharedPreferences("Contador", Context.MODE_PRIVATE);
         identidadPref = sharedPreferences.getString(IDENTIDAD,"");
         nombre = sharedPreferences.getString(NOMBRE,"");
         grado = sharedPreferences.getString(GRADO,"");
@@ -160,7 +173,6 @@ public class Login extends AppCompatActivity {
                 }
                 pass=contraseña.getText().toString();
                 ident=identidad.getText().toString();
-                obtenerDatosGrupos(ident);
 
                 if ((identidad.getText().toString().trim().length() > 0) && (contraseña.getText().toString().trim().length() > 0)) {
                     /**Valida si el pdf existe pàra abrirlo**/
@@ -199,20 +211,23 @@ public class Login extends AppCompatActivity {
                                     JSONArray jsonArray = response.getJSONArray("datoAlumno");
                                     for (int i=0;i<jsonArray.length();i++){
                                         JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                                        editor.putString(NOMBRE,jsonObject.getString("Nombres")+" "+jsonObject.getString("Apellidos"));
-                                        editor.apply();
-                                        editor.commit();
+                                       SQLiteDatabase dbEscribir = db.getWritableDatabase();
+                                       ContentValues values = new ContentValues();
+                                       values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE,jsonObject.getString("Nombres")+" "+
+                                               jsonObject.getString("Apellidos"));
+                                       values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD,identidad);
+                                       dbEscribir.insert(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,null,values);
+                                       dbEscribir.close();
                                     }
                                     Toast.makeText(Login.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
                                     String token = response.getString("access_token");
                                     String token_type = response.getString("token_type");
                                     String token_mas_token_type = token_type + " " + token;
+                                    obtenerDatosGrupos(ident,token_mas_token_type);
 
                                     /**Crea el shared preferences**/
                                     SharedPreferences.Editor editor = sharedPreferences.edit();
                                     editor.putString(TOKEN_AUTH, token_mas_token_type);
-                                    editor.putString(IDENTIDAD,identidad);
                                     SaveSharedPreference.setLoggedIn(Login.this,true);
                                     editor.apply();
                                     editor.commit();
@@ -222,25 +237,38 @@ public class Login extends AppCompatActivity {
                                     if (pdfFile.exists()==true){
                                         viewPDF(pdfFile);
                                     }else{
-                                        if (contadorGrupos==true){
-                                            sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
-                                            identidadPref = sharedPreferences.getString(IDENTIDAD,"");
-                                            nombre = sharedPreferences.getString(NOMBRE,"");
-                                            grado = sharedPreferences.getString(GRADO,"");
-                                            grupo = sharedPreferences.getString(GRUPO,"");
-                                            modalidad = sharedPreferences.getString(MODALIDAD,"");
-                                            modulo = sharedPreferences.getString(MODULO,"");
-                                            jornada = sharedPreferences.getString(JORNADA,"");
-                                            fecha = sharedPreferences.getString(HORA_FECHA, "");
-
-                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                                        }else{
-                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                            mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                            finish();
-                                            startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                                        SQLiteDatabase dbLeer = db.getReadableDatabase();
+                                        Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
+                                                BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad},
+                                                null,
+                                                 null,
+                                                null);
+                                        cursor.moveToFirst();
+                                        if (cursor.moveToFirst()==true){
+                                            Log.i("LOGIN T","entra"+cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS)));
                                         }
+
+                                            String contador = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
+                                        Toast.makeText(Login.this, ""+contador, Toast.LENGTH_SHORT).show();
+                                            if (contador.equals("1")){
+                                                identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+                                                nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+                                                grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+                                                grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+                                                modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+                                                modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+                                                jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+                                                fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
+                                                Log.i("LOGIN",""+identidadPref+" "+nombre+" "+grado+" "+grupo+" "+modalidad+" "+modulo+" "+jornada+
+                                                        " "+fecha);
+                                                pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                            }else{
+                                                /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                                Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                                mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                finish();
+                                                startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                                            }
                                     }
                                 }else{
                                     File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
@@ -248,29 +276,36 @@ public class Login extends AppCompatActivity {
                                     if (pdfFile.exists()==true){
                                         viewPDF(pdfFile);
                                     }else{
-                                        Log.i("LOGIN A",""+contadorGrupos);
-                                        if (contadorGrupos==true){
-                                            sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
-                                            identidadPref = sharedPreferences.getString(IDENTIDAD,"");
-                                            nombre = sharedPreferences.getString(NOMBRE,"");
-                                            grado = sharedPreferences.getString(GRADO,"");
-                                            grupo = sharedPreferences.getString(GRUPO,"");
-                                            modalidad = sharedPreferences.getString(MODALIDAD,"");
-                                            modulo = sharedPreferences.getString(MODULO,"");
-                                            jornada = sharedPreferences.getString(JORNADA,"");
-                                            fecha = sharedPreferences.getString(HORA_FECHA, "");
+                                        SQLiteDatabase dbLeer = db.getReadableDatabase();
+                                        Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,null,
+                                                BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad},null,null,
+                                                null);
+                                        cursor.moveToNext();
+                                        if (cursor.getCount()==1){
+                                            String contador = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
+                                            if (contador.equals("1")){
+                                                identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+                                                nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+                                                grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+                                                grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+                                                modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+                                                modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+                                                jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+                                                fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
 
-                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                                        }else{
-                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                            startActivity(mainActivity);
+                                                pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                            }else{
+                                                /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                                Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                                mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                finish();
+                                                startActivity(mainActivity);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }catch (Exception exc){
-                            Toast.makeText(Login.this, ""+exc, Toast.LENGTH_SHORT).show();
                             btn_login.setVisibility(View.VISIBLE);
                             loading.setVisibility(View.GONE);
                         }
@@ -319,7 +354,7 @@ public class Login extends AppCompatActivity {
     }
 
 
-    private void obtenerDatosGrupos(String identidad_Alumno) {
+    private void obtenerDatosGrupos(final String identidad_Alumno, final String token) {
 
         VolleySingleton.getInstanciaVolley(this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, URL_Datos_Grupos+identidad_Alumno,
                 null,
@@ -330,33 +365,38 @@ public class Login extends AppCompatActivity {
                         try {
                             JSONArray jsonArray = response.getJSONArray("filaGrupos");
 
-
                             for (int i = 0; i < jsonArray.length(); i++) {
 
                                 if (jsonArray.length()==1){
-                                    contadorGrupos=true;
+                                    SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
+                                    ContentValues values = new ContentValues();
+                                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS,"1");
+                                    sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
+                                            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
+                                    sqLiteDatabaseEscribir.close();
                                 }
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                SharedPreferences.Editor editor = sharedPreferences.edit();
-                                editor.putString(GRADO,jsonObject.getString("Grado"));
-                                editor.putString(GRUPO,jsonObject.getString("Grupo"));
-                                editor.putString(MODALIDAD,jsonObject.getString("Nombre_Modalidad"));
-                                editor.putString(MODULO,jsonObject.getString("Nombre_Modulo"));
-                                editor.putString(JORNADA,jsonObject.getString("Jornada"));
-                                editor.apply();
-                                editor.commit();
+                                SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
+                                ContentValues values = new ContentValues();
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,jsonObject.getString("Grado"));
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,jsonObject.getString("Grupo"));
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,jsonObject.getString("Nombre_Modalidad"));
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,jsonObject.getString("Nombre_Modulo"));
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,jsonObject.getString("Jornada"));
+                                sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
+                                        BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
+                                sqLiteDatabaseEscribir.close();
+
                             }
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putString(HORA_FECHA,response.getString("created_at").substring(0,16));
-                            editor.apply();
-                            editor.commit();
-
-
+                            SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
+                            ContentValues values = new ContentValues();
+                            values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,response.getString("created_at").substring(0,16));
+                            sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
+                                    BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
+                            sqLiteDatabaseEscribir.close();
 
                         } catch (Exception exc) {
-                            if (exc instanceof JSONException) {
-                                Toast.makeText(Login.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
-                            }
+                           exc.printStackTrace();
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -372,7 +412,15 @@ public class Login extends AppCompatActivity {
                     error.printStackTrace();
                 }
             }
-        }));
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String,String> headers = new HashMap<>();
+                headers.put("Authorization",token);
+
+                return headers;
+            }
+        });
     }
 
 

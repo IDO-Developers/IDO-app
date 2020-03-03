@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -18,6 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -37,11 +37,11 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.matricula.ido.Base_de_Datos.BaseDeDatosInfoAlumno;
 import com.matricula.ido.PDF.TemplatePDF;
 import com.itextpdf.text.Image;
 import com.matricula.ido.PDF.crearPDF;
 import com.matricula.ido.SharedPreferences.SaveSharedPreference;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -66,8 +66,6 @@ import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODALIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODULO;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.JORNADA;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.HORA_FECHA;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.PDF;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -104,10 +102,11 @@ public class MainActivity extends AppCompatActivity {
     private View contentViewEditModalidad;
     private View contentViewEditModulo;
     private View contentViewEditJornada;
-
+    private BaseDeDatosInfoAlumno db = new BaseDeDatosInfoAlumno(this);
     private int shortAnimationDuration;
     private View loadingView;
     private SharedPreferences sharedPreferences;
+    private SharedPreferences sharedContador;
     private String token;
 
     @Override
@@ -116,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        sharedContador = getSharedPreferences("Contador", Context.MODE_PRIVATE);
         identidadAlumno=sharedPreferences.getString(IDENTIDAD,"");
         token=sharedPreferences.getString(TOKEN_AUTH,"");
 
@@ -202,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString(MODULO, modulo.getText().toString());
                     editor.putString(JORNADA, jornada.getText().toString());
                     editor.putString(HORA_FECHA, obtenerFecha()+" "+obtenerHora());
+                    Log.i("P",""+obtenerFecha()+" "+obtenerHora());
                     editor.apply();
                     editor.commit();
                     matricularAlumno(rneAlumno.getText().toString());
@@ -338,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
                                    if (response!=null){
                                        Toast.makeText(MainActivity.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
                                        crearPDF(identidad_Alumno);
+                                       finish();
                                    }
                                 } catch (Exception exc) {
                                     exc.printStackTrace();
@@ -386,6 +388,9 @@ public class MainActivity extends AppCompatActivity {
                             editor.clear();
                             editor.apply();
                             SaveSharedPreference.setLoggedIn(MainActivity.this,false);
+                            SharedPreferences.Editor editor1 = sharedContador.edit();
+                            editor1.clear();
+                            editor1.apply();
                             Intent intent = new Intent(MainActivity.this,Login.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
@@ -497,13 +502,14 @@ public class MainActivity extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         101);
             } else {
+                String horaFecha = obtenerFecha()+" "+obtenerHora();
                 new crearPDF().crear(rneAlumno.getText().toString(),
                         nombreAlumno.getText().toString(),
                         grado.getText().toString(),
                         grupo.getSelectedItem().toString(),
                         modalidad.getText().toString(),
                         modulo.getText().toString(),
-                        jornada.getText().toString(),obtenerFecha(),MainActivity.this);
+                        jornada.getText().toString(),horaFecha,MainActivity.this);
             }
         }catch (Exception exc){
             exc.printStackTrace();
@@ -521,7 +527,7 @@ public class MainActivity extends AppCompatActivity {
                             grupo.getSelectedItem().toString(),
                             modalidad.getText().toString(),
                             modulo.getText().toString(),
-                            jornada.getText().toString(),obtenerFecha(),MainActivity.this);
+                            jornada.getText().toString(),obtenerFecha()+" "+obtenerHora(),MainActivity.this);
                 }
                 break;
         }
@@ -530,7 +536,7 @@ public class MainActivity extends AppCompatActivity {
     private String obtenerHora() {
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        DateFormat dateFormat = new SimpleDateFormat("HH:MM");
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm");
         String hora = dateFormat.format(date);
         return  hora;
     }
@@ -558,12 +564,7 @@ public class MainActivity extends AppCompatActivity {
                 cerrarSesion();
                 break;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onBackPressed() {
-        finish();
-    }
 }
