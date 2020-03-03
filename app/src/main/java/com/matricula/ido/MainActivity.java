@@ -468,7 +468,6 @@ public class MainActivity extends AppCompatActivity {
                 .alpha(1f)
                 .setDuration(shortAnimationDuration)
                 .setListener(null);
-
         // Animate the loading view to 0% opacity. After the animation ends,
         // set its visibility to GONE as an optimization step (it won't
         // participate in layout passes, etc.)
@@ -540,8 +539,6 @@ public class MainActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat fechaForm = new SimpleDateFormat("yyyy-MM-dd");
         String fecha = fechaForm.format(calendar.getTime());
-
-
         return fecha;
     }
 
@@ -549,7 +546,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.cerrarsesion, menu);
-
         return true;
     }
 

@@ -101,11 +101,6 @@ public class Login extends AppCompatActivity {
      private String jornada;
      private String fecha;
      private boolean contadorGrupos=false;
-     private ProgressDialog progress;
-    private View contentViewLogo;
-    private int shortAnimationDuration;
-    private View loadingView;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,31 +130,18 @@ public class Login extends AppCompatActivity {
         fecha = sharedPreferences.getString(HORA_FECHA,"");
 
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
+            /**Valida si el pdf existe pàra abrirlo*/
+            File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+            pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Log.i("LOGIN PREF", ""+identidadPref);
-
-                /**Valida si el pdf existe pàra abrirlo*/
-                File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
-
                 if (pdfFile.exists()==true){
-                    progress = ProgressDialog.show(Login.this, "Cargando",
-                            "Por favor esperce", true);
                     viewPDF(pdfFile);
                 }else {
                     pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
                 }
             }else{
-                String identidad=sharedPreferences.getString(IDENTIDAD,"");
-
-                /**Valida si el pdf existe pàra abrirlo*/
-                File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                pdfFile = new File(folder,"Verificar Matricula: "+identidad+"");
-
                 if (pdfFile.exists()==true){
-                    progress = ProgressDialog.show(Login.this, "Cargando",
-                            "Por favor esperce", true);
                     viewPDF(pdfFile);
                 }else {
                     pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
@@ -170,23 +152,19 @@ public class Login extends AppCompatActivity {
         }
 
 
-
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     btn_login.setBackground(getResources().getDrawable(R.drawable.bg_buttons2));
                 }
-
                 pass=contraseña.getText().toString();
                 ident=identidad.getText().toString();
                 obtenerDatosGrupos(ident);
 
                 if ((identidad.getText().toString().trim().length() > 0) && (contraseña.getText().toString().trim().length() > 0)) {
                     /**Valida si el pdf existe pàra abrirlo**/
-
                         login(ident, pass);
-
                 } else {
                     if (identidad.getText().toString().length() == 0 ||
                             identidad.getText().toString().trim().equalsIgnoreCase("")) {
@@ -225,7 +203,6 @@ public class Login extends AppCompatActivity {
                                         editor.putString(NOMBRE,jsonObject.getString("Nombres")+" "+jsonObject.getString("Apellidos"));
                                         editor.apply();
                                         editor.commit();
-
                                     }
                                     Toast.makeText(Login.this, ""+response.getString("message"), Toast.LENGTH_SHORT).show();
                                     String token = response.getString("access_token");
@@ -265,9 +242,6 @@ public class Login extends AppCompatActivity {
                                             startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
                                         }
                                     }
-
-
-
                                 }else{
                                     File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
                                     pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
@@ -362,7 +336,6 @@ public class Login extends AppCompatActivity {
                                 if (jsonArray.length()==1){
                                     contadorGrupos=true;
                                 }
-                                Log.i("LOGIN C",""+contadorGrupos);
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 editor.putString(GRADO,jsonObject.getString("Grado"));
@@ -400,7 +373,6 @@ public class Login extends AppCompatActivity {
                 }
             }
         }));
-
     }
 
 
@@ -436,9 +408,7 @@ public class Login extends AppCompatActivity {
         intent.addFlags(intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         finish();
-        progress.dismiss();
         startActivity(intent);
-
     }
 
     @Override
@@ -451,32 +421,4 @@ public class Login extends AppCompatActivity {
                 break;
         }
     }
-
-    private void crossfade() {
-        // Set the content view to 0% opacity but visible, so that it is visible
-        // (but fully transparent) during the animation.
-        contentViewLogo.setAlpha(0f);
-        contentViewLogo.setVisibility(View.VISIBLE);
-
-        // Animate the content view to 100% opacity, and clear any animation
-        // listener set on the view.
-        contentViewLogo.animate()
-                .alpha(1f)
-                .setDuration(shortAnimationDuration)
-                .setListener(null);
-
-        // Animate the loading view to 0% opacity. After the animation ends,
-        // set its visibility to GONE as an optimization step (it won't
-        // participate in layout passes, etc.)
-        loadingView.animate()
-                .alpha(0f)
-                .setDuration(shortAnimationDuration)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        loadingView.setVisibility(View.GONE);
-                    }
-                });
-    }
-
 }

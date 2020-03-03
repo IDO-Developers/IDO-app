@@ -21,8 +21,6 @@ public class crearPDF {
 
     private TemplatePDF templatePDF;
 
-
-
     public void crear(String identidad_Alumno, String nombre, String grado, String grupo, String modalidad,
                           String modulo, String jornada,String horaFecha, Context context){
 
