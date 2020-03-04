@@ -7,10 +7,12 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -102,12 +104,12 @@ public class MainActivity extends AppCompatActivity {
     private View contentViewEditModalidad;
     private View contentViewEditModulo;
     private View contentViewEditJornada;
-    private BaseDeDatosInfoAlumno db = new BaseDeDatosInfoAlumno(this);
     private int shortAnimationDuration;
     private View loadingView;
     private SharedPreferences sharedPreferences;
     private SharedPreferences sharedContador;
     private String token;
+    private BaseDeDatosInfoAlumno db = new BaseDeDatosInfoAlumno(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,8 +117,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
-        sharedContador = getSharedPreferences("Contador", Context.MODE_PRIVATE);
-        identidadAlumno=sharedPreferences.getString(IDENTIDAD,"");
+        identidadAlumno=getIntent().getExtras().getString("identidad");
         token=sharedPreferences.getString(TOKEN_AUTH,"");
 
         rneAlumno = (EditText) findViewById(R.id.editTextRneAlumno);
@@ -194,17 +195,15 @@ public class MainActivity extends AppCompatActivity {
                 if (obtnValorSpinner.equals("")){
                     Toast.makeText(MainActivity.this, "¡Por Favor! Seleccione un grupo para poder matricular", Toast.LENGTH_LONG).show();
                 }else {
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString(NOMBRE, nombreAlumno.getText().toString());
-                    editor.putString(GRADO, grado.getText().toString());
-                    editor.putString(GRUPO, grupo.getSelectedItem().toString());
-                    editor.putString(MODALIDAD, modalidad.getText().toString());
-                    editor.putString(MODULO, modulo.getText().toString());
-                    editor.putString(JORNADA, jornada.getText().toString());
-                    editor.putString(HORA_FECHA, obtenerFecha()+" "+obtenerHora());
-                    Log.i("P",""+obtenerFecha()+" "+obtenerHora());
-                    editor.apply();
-                    editor.commit();
+                    SQLiteDatabase dbEscribir = db.getWritableDatabase();
+                    ContentValues values = new ContentValues();
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE,nombreAlumno.getText().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,grado.getText().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,grupo.getSelectedItem().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,modalidad.getText().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,modulo.getText().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,jornada.getText().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,obtenerFecha()+" "+obtenerHora());
                     matricularAlumno(rneAlumno.getText().toString());
                 }
             }
@@ -388,9 +387,9 @@ public class MainActivity extends AppCompatActivity {
                             editor.clear();
                             editor.apply();
                             SaveSharedPreference.setLoggedIn(MainActivity.this,false);
-                            SharedPreferences.Editor editor1 = sharedContador.edit();
-                            editor1.clear();
-                            editor1.apply();
+                            SQLiteDatabase sqliteEscribir = db.getWritableDatabase();
+                            sqliteEscribir.delete(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,null,null);
+                            sqliteEscribir.close();
                             Intent intent = new Intent(MainActivity.this,Login.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);

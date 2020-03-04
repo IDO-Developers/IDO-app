@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.strictmode.SqliteObjectLeakedViolation;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -71,13 +72,12 @@ public class Login extends AppCompatActivity {
     private RelativeLayout rellay1, rellay2, rellay3;
     private Button btn_login, btn_restaurar_contrasenia;
     private EditText contraseña,identidad;
+    private SharedPreferences sharedPreferences;
     private TextView tituloapp;
     private EditText correo_restaurar;
     private Button restaurar;
     private ProgressBar loading;
     private Handler handler = new Handler();
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences sharedContador;
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -88,10 +88,7 @@ public class Login extends AppCompatActivity {
     };
     private String pass;
     private String ident;
-    private Boolean registered;
     private String identidadPref;
-    String pathPdfPref;
-    String pathPdf;
     private String nombre;
     private String grado;
     private String grupo;
@@ -131,18 +128,26 @@ public class Login extends AppCompatActivity {
         loading = findViewById(R.id.loading);
         restaurar = findViewById(R.id.boton_restaurar);
 
-        sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
-        sharedContador = getSharedPreferences("Contador", Context.MODE_PRIVATE);
-        identidadPref = sharedPreferences.getString(IDENTIDAD,"");
-        nombre = sharedPreferences.getString(NOMBRE,"");
-        grado = sharedPreferences.getString(GRADO,"");
-        grupo = sharedPreferences.getString(GRUPO,"");
-        modalidad = sharedPreferences.getString(MODALIDAD,"");
-        modulo = sharedPreferences.getString(MODULO,"");
-        jornada = sharedPreferences.getString(JORNADA,"");
-        fecha = sharedPreferences.getString(HORA_FECHA,"");
+        sharedPreferences = getSharedPreferences("MyPreferences",Context.MODE_PRIVATE);
+
 
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
+            SQLiteDatabase sqliteLeer = db.getReadableDatabase();
+            Cursor cursor = sqliteLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
+                    null,null,
+                    null,
+                    null,
+                    null);
+            cursor.moveToFirst();
+
+            identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+            nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+            grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+            grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+            modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+            modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+            jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+            fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
             /**Valida si el pdf existe pàra abrirlo*/
             File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
             pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
@@ -176,6 +181,7 @@ public class Login extends AppCompatActivity {
 
                 if ((identidad.getText().toString().trim().length() > 0) && (contraseña.getText().toString().trim().length() > 0)) {
                     /**Valida si el pdf existe pàra abrirlo**/
+
                         login(ident, pass);
                 } else {
                     if (identidad.getText().toString().length() == 0 ||
@@ -244,12 +250,9 @@ public class Login extends AppCompatActivity {
                                                  null,
                                                 null);
                                         cursor.moveToFirst();
-                                        if (cursor.moveToFirst()==true){
-                                            Log.i("LOGIN T","entra"+cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS)));
-                                        }
 
                                             String contador = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
-                                        Toast.makeText(Login.this, ""+contador, Toast.LENGTH_SHORT).show();
+                                            Log.i("LOGIN", contador);
                                             if (contador.equals("1")){
                                                 identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
                                                 nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
@@ -262,9 +265,13 @@ public class Login extends AppCompatActivity {
                                                 Log.i("LOGIN",""+identidadPref+" "+nombre+" "+grado+" "+grupo+" "+modalidad+" "+modulo+" "+jornada+
                                                         " "+fecha);
                                                 pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                                dbLeer.close();
                                             }else{
                                                 /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                                Bundle identidadI = new Bundle();
+                                                identidadI.putString("identidad", identidad);
                                                 Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                                mainActivity.putExtras(identidadI);
                                                 mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                                 finish();
                                                 startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
@@ -294,9 +301,13 @@ public class Login extends AppCompatActivity {
                                                 fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
 
                                                 pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                                dbLeer.close();
                                             }else{
                                                 /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                                Bundle identidadI = new Bundle();
+                                                identidadI.putString("identidad", identidad);
                                                 Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                                mainActivity.putExtras(identidadI);
                                                 mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                                 finish();
                                                 startActivity(mainActivity);
@@ -417,12 +428,10 @@ public class Login extends AppCompatActivity {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String,String> headers = new HashMap<>();
                 headers.put("Authorization",token);
-
                 return headers;
             }
         });
     }
-
 
     private void pdf(String identidad_Alumno, String nombre, String grado, String grupo, String modalidad,
                      String modulo, String jornada, String fecha){

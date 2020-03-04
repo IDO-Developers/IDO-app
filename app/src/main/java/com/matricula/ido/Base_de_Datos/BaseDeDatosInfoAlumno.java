@@ -8,14 +8,13 @@ import android.provider.BaseColumns;
 public class BaseDeDatosInfoAlumno extends SQLiteOpenHelper {
 
 
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "Alumnos.db";
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + FeedReaderContract.FeedEntry.TABLE_NAME + " (" +
                     FeedReaderContract.FeedEntry._ID + " INTEGER PRIMARY KEY," +
                     FeedReaderContract.FeedEntry.NOMBRE + " TEXT," +
-                    FeedReaderContract.FeedEntry.APELLIDO + " TEXT," +
-                    FeedReaderContract.FeedEntry.IDENTIDAD + " TEXT," +
+                    FeedReaderContract.FeedEntry.IDENTIDAD + " TEXT UNIQUE," +
                     FeedReaderContract.FeedEntry.FECHA_HORA + " TEXT," +
                     FeedReaderContract.FeedEntry.GRADO + " TEXT," +
                     FeedReaderContract.FeedEntry.GRUPO + " TEXT," +
@@ -50,7 +49,6 @@ public class BaseDeDatosInfoAlumno extends SQLiteOpenHelper {
         public class FeedEntry implements BaseColumns {
             public static final String TABLE_NAME = "infoAlumno";
             public static final String NOMBRE = "nombres";
-            public static final String APELLIDO = "apèllidos";
             public static final String IDENTIDAD = "identidad";
             public static final String GRADO = "grado";
             public static final String GRUPO = "grupos";
