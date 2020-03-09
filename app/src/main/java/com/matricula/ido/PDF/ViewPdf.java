@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -84,10 +85,6 @@ public class ViewPdf extends AppCompatActivity {
                 .enableDoubletap(true)
                 .enableAntialiasing(true)
                 .load();
-
-
-
-
     }
 
 
@@ -105,17 +102,21 @@ public class ViewPdf extends AppCompatActivity {
 
 
             case R.id.enviarAdjunto:
-                Uri uri = Uri.fromFile(new File(String.valueOf(file)));
-                Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                emailIntent.setType("application/pdf");
-                emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                startActivity(Intent.createChooser(emailIntent, "Send email using:"));
+                Uri uri = FileProvider.getUriForFile(this,
+                        this.getApplicationContext().getPackageName() + ".provider", file);
+                Log.i("Archivo",""+file+" "+uri);
+                Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+                intentShareFile.setType("application/pdf");
+                intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
+                intentShareFile.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(intentShareFile, "Compartiendo Verificación de Matricula"));
+
+                break;
 
             case R.id.cerrarSesion:
                 cerrarSesion();
                 break;
         }
-
         return super.onOptionsItemSelected(item);
     }
 

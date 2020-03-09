@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import com.itextpdf.text.Image;
-import com.matricula.ido.Login;
 import com.matricula.ido.R;
 import java.io.ByteArrayOutputStream;
 

@@ -1,4 +1,4 @@
-package com.matricula.ido;
+package com.matricula.ido.Grupos;
 
 
 public class PojoGrupos {
@@ -9,18 +9,38 @@ public class PojoGrupos {
   public String jornada;
   public String grupo;
   public String modulo;
+  public String num_hombres;
+  public String num_mujeres;
 
-  public PojoGrupos(int id, String grado, String modalidad,String jornada,String grupo,String modulo) {
+  public PojoGrupos(int id, String grado, String modalidad,String jornada,String grupo,String modulo,String num_hombres,String num_mujeres) {
     this.id = id;
     this.grado = grado;
     this.modalidad = modalidad;
     this.jornada = jornada;
     this.grupo = grupo;
     this.modulo = modulo;
+    this.num_hombres = num_hombres;
+    this.num_mujeres = num_mujeres;
   }
 
   public PojoGrupos() {
 
+  }
+
+  public String getNum_hombres() {
+    return num_hombres;
+  }
+
+  public void setNum_hombres(String num_hombres) {
+    this.num_hombres = num_hombres;
+  }
+
+  public String getNum_mujeres() {
+    return num_mujeres;
+  }
+
+  public void setNum_mujeres(String num_mujeres) {
+    this.num_mujeres = num_mujeres;
   }
 
   public String getModulo() {

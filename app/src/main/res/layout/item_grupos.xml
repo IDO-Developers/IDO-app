@@ -5,11 +5,22 @@
 
     <TextView
         android:id="@+id/grupo"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Grupo"
+        android:text=""
         android:textSize="15sp"
         android:padding="8dp"
+        android:textColor="@color/dark"
+        android:layout_marginLeft="20dp"
+        />
+    <TextView
+        android:id="@+id/cupos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/grupo"
+        android:text=""
+        android:textSize="15sp"
+        android:padding="7dp"
         android:textColor="@color/dark"
         android:layout_marginLeft="20dp"
         />

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimaryDarkFondoCard"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto">
+
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardCornerRadius="4dp"
+            card_view:cardElevation="8dp"
+            card_view:cardPreventCornerOverlap="true"
+            card_view:cardUseCompatPadding="true"
+            >
+
+           <RelativeLayout
+               android:id="@+id/relativeD"
+               android:layout_width="match_parent"
+               android:layout_height="match_parent"
+               >
+               <TextView
+                   android:id="@+id/txtDescripcion"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:paddingLeft="10dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="15dp"
+                   android:text="Cantidad de cupos disponibles:"
+                   android:textColor="@color/dark"
+                   android:textSize="20sp"
+                   android:textStyle="bold" />
+
+               <TextView
+                   android:id="@+id/numeroHombres"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@+id/txtDescripcion"
+                   android:paddingLeft="10dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="8dp"
+                   android:text="Masculino:"
+                   android:textColor="@color/dark"
+                   android:textSize="18sp"
+                   android:textStyle="bold"
+                   />
+               <TextView
+                   android:id="@+id/nH"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@+id/txtDescripcion"
+                   android:layout_toRightOf="@+id/numeroHombres"
+                   android:paddingLeft="10dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="8dp"
+                   android:text="12"
+                   android:textColor="@color/dark"
+                   android:textSize="18sp"
+                   android:textStyle="normal"
+                   />
+               <TextView
+                   android:id="@+id/numeroMujeres"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@+id/numeroHombres"
+                   android:paddingLeft="10dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="8dp"
+                   android:text="Femenino:"
+                   android:textColor="@color/dark"
+                   android:textSize="18sp"
+                   android:textStyle="bold"
+                   />
+               <TextView
+                   android:id="@+id/nM"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@+id/numeroHombres"
+                   android:layout_toRightOf="@+id/numeroHombres"
+                   android:paddingLeft="10dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="8dp"
+                   android:text="12"
+                   android:textColor="@color/dark"
+                   android:textSize="18sp"
+                   android:textStyle="normal"
+                   />
+
+
+           </RelativeLayout>
+
+        </androidx.cardview.widget.CardView>
+</RelativeLayout>

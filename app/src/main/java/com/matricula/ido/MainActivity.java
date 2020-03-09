@@ -2,6 +2,7 @@ package com.matricula.ido;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import android.Manifest;
@@ -9,17 +10,14 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -40,16 +38,15 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.matricula.ido.Base_de_Datos.BaseDeDatosInfoAlumno;
+import com.matricula.ido.Grupos.Adaptador_Grupos;
+import com.matricula.ido.Grupos.PojoGrupos;
 import com.matricula.ido.PDF.TemplatePDF;
-import com.itextpdf.text.Image;
 import com.matricula.ido.PDF.crearPDF;
 import com.matricula.ido.SharedPreferences.SaveSharedPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import static android.R.layout.simple_spinner_dropdown_item;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -59,15 +56,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.IDENTIDAD;
 import static com.matricula.ido.SharedPreferences.PreferencesUtility.TOKEN_AUTH;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.NOMBRE;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRADO;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.GRUPO;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODALIDAD;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.MODULO;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.JORNADA;
-import static com.matricula.ido.SharedPreferences.PreferencesUtility.HORA_FECHA;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -94,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private String espacioVacioSpinner;
     private String sexoJson;
     private String idGrupo;
+    private String grupoNom;
     private String obtnValorSpinner;
     private JSONArray jsonArraySpinner;
     private int posicion;
@@ -130,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
         matricular = (Button) findViewById(R.id.botonMatricular);
         nombreAlumno = (TextView) findViewById(R.id.txtNombreAlumno);
 
-
         contentViewTxtModalidad = (TextView)findViewById(R.id.txtModalidad);
         contentViewTxtModulo = (TextView)findViewById(R.id.txtModulo);
         contentViewTxtJornada = (TextView)findViewById(R.id.txtJornada);
@@ -166,20 +155,51 @@ public class MainActivity extends AppCompatActivity {
                         modalidad.setText("");
                         jornada.setText("");
                         modulo.setText("");
+                        contentViewTxtModalidad.setVisibility(View.GONE);
+                        contentViewTxtModulo.setVisibility(View.GONE);
+                        contentViewTxtJornada.setVisibility(View.GONE);
+                        contentViewEditModalidad.setVisibility(View.GONE);
+                        contentViewEditModulo.setVisibility(View.GONE);
+                        contentViewEditJornada.setVisibility(View.GONE);
                     } else {
 
-                        modalidad.setText(arrayListsGrupos.get(position).getModalidad());
-                        jornada.setText(arrayListsGrupos.get(position).getJornada());
-                        modulo.setText(arrayListsGrupos.get(position).getModulo());
-                        idGrupo = String.valueOf(arrayListsGrupos.get(position).getId());
-                        crossfade();
+                        final AlertDialog.Builder alertDialo = new AlertDialog.Builder(MainActivity.this);
+                        LayoutInflater inflater= LayoutInflater.from(MainActivity.this);
+                        View viewDialogo = inflater.inflate(R.layout.item_dialogo_info_grupo, null);
+                        alertDialo.setTitle("Detalle de Grupo");
+                        TextView numM = (TextView)viewDialogo.findViewById(R.id.nH);
+                        TextView numF = (TextView)viewDialogo.findViewById(R.id.nM);
+
+                        numM.setText(arrayListsGrupos.get(position).getNum_hombres());
+                        numF.setText(arrayListsGrupos.get(position).getNum_mujeres());
+
+                        alertDialo.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                modalidad.setText(arrayListsGrupos.get(position).getModalidad());
+                                jornada.setText(arrayListsGrupos.get(position).getJornada());
+                                modulo.setText(arrayListsGrupos.get(position).getModulo());
+                                idGrupo = String.valueOf(arrayListsGrupos.get(position).getId());
+                                grupoNom = arrayListsGrupos.get(position).getGrupo();
+                                crossfade();
+                            }
+                        });
+                        alertDialo.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                                grupo.setSelection(0);
+                            }
+                        });
+                        alertDialo.setView(viewDialogo);
+                        alertDialo.create().show();
+
 
                     }
                 } catch (Exception exc) {
                     exc.printStackTrace();
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 modalidad.setText("");
@@ -197,13 +217,15 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     SQLiteDatabase dbEscribir = db.getWritableDatabase();
                     ContentValues values = new ContentValues();
-                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE,nombreAlumno.getText().toString());
                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,grado.getText().toString());
-                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,grupo.getSelectedItem().toString());
+                    values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,grupoNom);
                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,modalidad.getText().toString());
                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,modulo.getText().toString());
                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,jornada.getText().toString());
                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,obtenerFecha()+" "+obtenerHora());
+                    dbEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
+                            BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?", new String[]{identidadAlumno});
+
                     matricularAlumno(rneAlumno.getText().toString());
                 }
             }
@@ -273,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
                             arrayListString.add("");
                             arrayListsGrupos.add(pojoGrupos);
 
+
                             for (int i = 0; i < jsonArray.length(); i++) {
                                 if (jsonArray.length()==1){
                                     arrayListsGrupos.clear();
@@ -289,6 +312,8 @@ public class MainActivity extends AppCompatActivity {
                                 pojoGrupos.setModalidad(jsonObject.getString("Nombre_Modalidad"));
                                 pojoGrupos.setModulo(jsonObject.getString("Nombre_Modulo"));
                                 pojoGrupos.setGrupo(jsonObject.getString("Grupo"));
+                                pojoGrupos.setNum_hombres(jsonObject.getString("Num_Hombres"));
+                                pojoGrupos.setNum_mujeres(jsonObject.getString("Num_Mujeres"));
                                 grado.setText(jsonObject.getString("Grado"));
 
                                 /**ArrayList con solo el grupo para mostrar en el spinner**/
@@ -296,19 +321,23 @@ public class MainActivity extends AppCompatActivity {
 
                                 /**Arraylist con todos los elementos de la clase pojo**/
                                 arrayListsGrupos.add(pojoGrupos);
+
                             }
-                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, simple_spinner_dropdown_item,
+                            //adaptador_grupos = new Adaptador_Grupos(MainActivity.this,arrayListsGrupos);
+                            //adaptador_grupos.notifyDataSetChanged();
+                            //grupo.setAdapter(adaptador_grupos);
+
+                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, simple_spinner_dropdown_item,
                                     arrayListString);
-                            adapter.setDropDownViewResource(simple_spinner_dropdown_item);
-                            grupo.setAdapter(adapter);
+                             adapter.setDropDownViewResource(simple_spinner_dropdown_item);
+                             grupo.setAdapter(adapter);
+
 
                         } catch (Exception exc) {
                             if (exc instanceof JSONException) {
                                 Toast.makeText(MainActivity.this, "Error con alguno de los datos", Toast.LENGTH_SHORT).show();
                             }
-
                         }
-
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -388,7 +417,8 @@ public class MainActivity extends AppCompatActivity {
                             editor.apply();
                             SaveSharedPreference.setLoggedIn(MainActivity.this,false);
                             SQLiteDatabase sqliteEscribir = db.getWritableDatabase();
-                            sqliteEscribir.delete(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,null,null);
+                            sqliteEscribir.delete(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,
+                                    BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidadAlumno});
                             sqliteEscribir.close();
                             Intent intent = new Intent(MainActivity.this,Login.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -475,15 +505,21 @@ public class MainActivity extends AppCompatActivity {
         // Animate the loading view to 0% opacity. After the animation ends,
         // set its visibility to GONE as an optimization step (it won't
         // participate in layout passes, etc.)
-        loadingView.animate()
+       /* loadingView.animate()
                 .alpha(0f)
                 .setDuration(shortAnimationDuration)
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        loadingView.setVisibility(View.GONE);
+                        contentViewTxtModalidad.setVisibility(View.GONE);
+                        contentViewTxtModulo.setVisibility(View.GONE);
+                        contentViewTxtJornada.setVisibility(View.GONE);
+                        contentViewEditModalidad.setVisibility(View.GONE);
+                        contentViewEditModulo.setVisibility(View.GONE);
+                        contentViewEditJornada.setVisibility(View.GONE);
                     }
-                });
+                });*/
+
     }
 
     private void crearPDF(String identidad_Alumno){
@@ -505,7 +541,7 @@ public class MainActivity extends AppCompatActivity {
                 new crearPDF().crear(rneAlumno.getText().toString(),
                         nombreAlumno.getText().toString(),
                         grado.getText().toString(),
-                        grupo.getSelectedItem().toString(),
+                        grupoNom,
                         modalidad.getText().toString(),
                         modulo.getText().toString(),
                         jornada.getText().toString(),horaFecha,MainActivity.this);
@@ -558,7 +594,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         switch (item.getItemId()){
-
             case R.id.cerrarSesion:
                 cerrarSesion();
                 break;

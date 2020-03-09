@@ -96,6 +96,7 @@ public class Login extends AppCompatActivity {
     private String modulo;
     private String jornada;
     private String fecha;
+    private String cont;
     private BaseDeDatosInfoAlumno db = new BaseDeDatosInfoAlumno(this);
     private String PROJECTION[] = new String[]{BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE,
             BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD,
@@ -131,6 +132,7 @@ public class Login extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("MyPreferences",Context.MODE_PRIVATE);
 
 
+
         if (SaveSharedPreference.getLoggedStatus(Login.this)){
             SQLiteDatabase sqliteLeer = db.getReadableDatabase();
             Cursor cursor = sqliteLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
@@ -148,23 +150,46 @@ public class Login extends AppCompatActivity {
             modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
             jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
             fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
+            cont = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
             /**Valida si el pdf existe pàra abrirlo*/
             File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
             pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (pdfFile.exists()==true){
-                    viewPDF(pdfFile);
-                }else {
-                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                }
-            }else{
-                if (pdfFile.exists()==true){
-                    viewPDF(pdfFile);
-                }else {
-                    pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                }
-            }
+           if (cont!=null){
+               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                   if (pdfFile.exists()==true){
+                       viewPDF(pdfFile);
+                   }else {
+                       pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                   }
+               }else{
+                   if (pdfFile.exists()==true){
+                       viewPDF(pdfFile);
+                   }else {
+                       pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                   }
+               }
+           }else{
+               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                   /**Lanza a la actividad principal cuando el logueo es correcto**/
+                   Bundle identidadI = new Bundle();
+                   identidadI.putString("identidad", identidadPref);
+                   Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                   mainActivity.putExtras(identidadI);
+                   mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                   startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                   finish();
+               }else{
+                   /**Lanza a la actividad principal cuando el logueo es correcto**/
+                   Bundle identidadI = new Bundle();
+                   identidadI.putString("identidad", identidadPref);
+                   Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                   mainActivity.putExtras(identidadI);
+                   mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                   finish();
+                   startActivity(mainActivity);
+               }
+           }
         }else{
            handler.postDelayed(runnable, 1200); //800 es el tiempo de espera
         }
@@ -211,8 +236,8 @@ public class Login extends AppCompatActivity {
 
                         try {
 
+                            Log.i("LOGIN",""+response.toString());
                             if (response!=null){
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
                                     JSONArray jsonArray = response.getJSONArray("datoAlumno");
                                     for (int i=0;i<jsonArray.length();i++){
@@ -229,7 +254,8 @@ public class Login extends AppCompatActivity {
                                     String token = response.getString("access_token");
                                     String token_type = response.getString("token_type");
                                     String token_mas_token_type = token_type + " " + token;
-                                    obtenerDatosGrupos(ident,token_mas_token_type);
+                                    int cp = response.getInt("cp");
+                                Log.i("LOGIN",""+token_mas_token_type+" cp "+cp);
 
                                     /**Crea el shared preferences**/
                                     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -238,83 +264,39 @@ public class Login extends AppCompatActivity {
                                     editor.apply();
                                     editor.commit();
 
-                                    File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                                    pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
-                                    if (pdfFile.exists()==true){
-                                        viewPDF(pdfFile);
-                                    }else{
-                                        SQLiteDatabase dbLeer = db.getReadableDatabase();
-                                        Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
-                                                BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad},
-                                                null,
-                                                 null,
-                                                null);
-                                        cursor.moveToFirst();
-
-                                            String contador = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
-                                            Log.i("LOGIN", contador);
-                                            if (contador.equals("1")){
-                                                identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
-                                                nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
-                                                grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
-                                                grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
-                                                modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
-                                                modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
-                                                jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
-                                                fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
-                                                Log.i("LOGIN",""+identidadPref+" "+nombre+" "+grado+" "+grupo+" "+modalidad+" "+modulo+" "+jornada+
-                                                        " "+fecha);
-                                                pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                                                dbLeer.close();
-                                            }else{
-                                                /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                                Bundle identidadI = new Bundle();
-                                                identidadI.putString("identidad", identidad);
-                                                Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                                mainActivity.putExtras(identidadI);
-                                                mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                                finish();
-                                                startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
-                                            }
-                                    }
+                                File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
+                                if (pdfFile.exists()==true){
+                                    viewPDF(pdfFile);
                                 }else{
-                                    File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
-                                    pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
-                                    if (pdfFile.exists()==true){
-                                        viewPDF(pdfFile);
+                                    Log.i("LOGIN",""+cp);
+                                    if (cp==1){
+                                        obtenerDatosGrupos(ident,token_mas_token_type);
                                     }else{
-                                        SQLiteDatabase dbLeer = db.getReadableDatabase();
-                                        Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,null,
-                                                BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad},null,null,
-                                                null);
-                                        cursor.moveToNext();
-                                        if (cursor.getCount()==1){
-                                            String contador = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS));
-                                            if (contador.equals("1")){
-                                                identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
-                                                nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
-                                                grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
-                                                grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
-                                                modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
-                                                modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
-                                                jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
-                                                fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
-
-                                                pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
-                                                dbLeer.close();
-                                            }else{
-                                                /**Lanza a la actividad principal cuando el logueo es correcto**/
-                                                Bundle identidadI = new Bundle();
-                                                identidadI.putString("identidad", identidad);
-                                                Intent mainActivity = new Intent(Login.this, MainActivity.class);
-                                                mainActivity.putExtras(identidadI);
-                                                mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                                finish();
-                                                startActivity(mainActivity);
-                                            }
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                            Bundle identidadI = new Bundle();
+                                            identidadI.putString("identidad", identidad);
+                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                            mainActivity.putExtras(identidadI);
+                                            mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                            startActivity(mainActivity, ActivityOptions.makeSceneTransitionAnimation(Login.this).toBundle());
+                                            finish();
+                                        }else{
+                                            /**Lanza a la actividad principal cuando el logueo es correcto**/
+                                            Bundle identidadI = new Bundle();
+                                            identidadI.putString("identidad", identidad);
+                                            Intent mainActivity = new Intent(Login.this, MainActivity.class);
+                                            mainActivity.putExtras(identidadI);
+                                            mainActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                            finish();
+                                            startActivity(mainActivity);
                                         }
                                     }
+
                                 }
+
+
                             }
                         }catch (Exception exc){
                             btn_login.setVisibility(View.VISIBLE);
@@ -378,33 +360,93 @@ public class Login extends AppCompatActivity {
 
                             for (int i = 0; i < jsonArray.length(); i++) {
 
-                                if (jsonArray.length()==1){
+
                                     SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
                                     ContentValues values = new ContentValues();
                                     values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.CONTADOR_GRUPOS,"1");
                                     sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
                                             BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
                                     sqLiteDatabaseEscribir.close();
-                                }
+                                    Log.i("LOGIN","entra");
+
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                SQLiteDatabase sqLiteDatabaseEscribir2 = db.getWritableDatabase();
+                                ContentValues values2 = new ContentValues();
+                                values2.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,jsonObject.getString("Grado"));
+                                values2.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,jsonObject.getString("Grupo"));
+                                values2.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,jsonObject.getString("Nombre_Modalidad"));
+                                values2.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,jsonObject.getString("Nombre_Modulo"));
+                                values2.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,jsonObject.getString("Jornada"));
+                                sqLiteDatabaseEscribir2.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
+                                        BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
+                                sqLiteDatabaseEscribir.close();
+                                Log.i("LOGIN","entra");
+
+                            }
+
                                 SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
                                 ContentValues values = new ContentValues();
-                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO,jsonObject.getString("Grado"));
-                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO,jsonObject.getString("Grupo"));
-                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD,jsonObject.getString("Nombre_Modalidad"));
-                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO,jsonObject.getString("Nombre_Modulo"));
-                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA,jsonObject.getString("Jornada"));
+                                values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,response.getString("created_at").substring(0,16));
                                 sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
                                         BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
                                 sqLiteDatabaseEscribir.close();
 
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
+                                if (pdfFile.exists()==true){
+                                    viewPDF(pdfFile);
+                                }else{
+                                    SQLiteDatabase dbLeer = db.getReadableDatabase();
+                                    Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
+                                            null,null,
+                                            null,
+                                            null,
+                                            null);
+                                    cursor.moveToFirst();
+
+                                    String contad =sharedPreferences.getString(PDF,"");
+                                    Log.i("LOGIN", contad);
+                                        identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+                                        nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+                                        grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+                                        grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+                                        modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+                                        modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+                                        jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+                                        fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
+                                        Log.i("LOGIN",""+identidadPref+" "+nombre+" "+grado+" "+grupo+" "+modalidad+" "+modulo+" "+jornada+
+                                                " "+fecha);
+                                        pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                        dbLeer.close();
+                                }
+                            }else{
+                                File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
+                                pdfFile = new File(folder,"Verificar Matricula: "+identidad+".pdf");
+                                if (pdfFile.exists()==true){
+                                    viewPDF(pdfFile);
+                                }else{
+                                    SQLiteDatabase dbLeer = db.getReadableDatabase();
+                                    Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
+                                            null,null,null,null,
+                                            null);
+                                    cursor.moveToFirst();
+
+                                            identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+                                            nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+                                            grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+                                            grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+                                            modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+                                            modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+                                            jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+                                            fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
+
+                                            pdf(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha);
+                                            dbLeer.close();
+
+                                }
                             }
-                            SQLiteDatabase sqLiteDatabaseEscribir = db.getWritableDatabase();
-                            ContentValues values = new ContentValues();
-                            values.put(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA,response.getString("created_at").substring(0,16));
-                            sqLiteDatabaseEscribir.update(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,values,
-                                    BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD+"=?",new String[]{identidad_Alumno});
-                            sqLiteDatabaseEscribir.close();
 
                         } catch (Exception exc) {
                            exc.printStackTrace();
@@ -456,8 +498,6 @@ public class Login extends AppCompatActivity {
         }
     }
 
-
-
     public  void viewPDF(File pdfFile){
         Intent intent = new Intent(Login.this, ViewPdf.class);
         intent.putExtra("path",pdfFile.getAbsolutePath());
@@ -473,6 +513,21 @@ public class Login extends AppCompatActivity {
         switch (requestCode){
             case 100:
                 if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    SQLiteDatabase dbLeer = db.getReadableDatabase();
+                    Cursor cursor = dbLeer.query(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.TABLE_NAME,PROJECTION,
+                            null,null,
+                            null,
+                            null,
+                            null);
+                    cursor.moveToFirst();
+                    identidadPref = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.IDENTIDAD));
+                    nombre = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.NOMBRE));
+                    grado = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRADO));
+                    grupo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.GRUPO));
+                    modalidad = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODALIDAD));
+                    modulo = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.MODULO));
+                    jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
+                    fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
                     new crearPDF().crear(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha,Login.this);
                 }
                 break;
