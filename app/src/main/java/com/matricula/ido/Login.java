@@ -155,7 +155,7 @@ public class Login extends AppCompatActivity {
             File folder = new File(Environment.getExternalStorageDirectory().toString(), "IDO/");
             pdfFile = new File(folder,"Verificar Matricula: "+identidadPref+".pdf");
 
-           if (cont!=null){
+           if (grupo!=null){
                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                    if (pdfFile.exists()==true){
                        viewPDF(pdfFile);
@@ -499,13 +499,33 @@ public class Login extends AppCompatActivity {
     }
 
     public  void viewPDF(File pdfFile){
-        Intent intent = new Intent(Login.this, ViewPdf.class);
-        intent.putExtra("path",pdfFile.getAbsolutePath());
-        intent.putExtra("file",pdfFile.toString());
-        intent.addFlags(intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        finish();
-        startActivity(intent);
+
+        try{
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        102);
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        101);
+            } else {
+                Intent intent = new Intent(Login.this, ViewPdf.class);
+                intent.putExtra("path",pdfFile.getAbsolutePath());
+                intent.putExtra("file",pdfFile.toString());
+                intent.addFlags(intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                finish();
+                startActivity(intent);
+                finish();
+            }
+        }catch (Exception exc){
+            exc.printStackTrace();
+        }
+
     }
 
     @Override
@@ -529,6 +549,19 @@ public class Login extends AppCompatActivity {
                     jornada = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.JORNADA));
                     fecha = cursor.getString(cursor.getColumnIndex(BaseDeDatosInfoAlumno.FeedReaderContract.FeedEntry.FECHA_HORA));
                     new crearPDF().crear(identidadPref,nombre,grado, grupo, modalidad,modulo,jornada,fecha,Login.this);
+                }
+                break;
+
+            case 102:
+                if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    Intent intent = new Intent(Login.this, ViewPdf.class);
+                    intent.putExtra("path",pdfFile.getAbsolutePath());
+                    intent.putExtra("file",pdfFile.toString());
+                    intent.addFlags(intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    finish();
+                    startActivity(intent);
+                    finish();
                 }
                 break;
         }
