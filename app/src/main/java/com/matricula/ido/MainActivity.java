@@ -297,11 +297,6 @@ public class MainActivity extends AppCompatActivity {
 
 
                             for (int i = 0; i < jsonArray.length(); i++) {
-                                if (jsonArray.length()==1){
-                                    arrayListsGrupos.clear();
-                                    arrayListString.clear();
-                                    grupo.setSelection(0);
-                                }
 
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
 
